@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "VR Link",
+	"Description": "Connects any Unreal experience to the Neural Recorder tablet: the vrlink protocol, session lifecycle, scene and mark events, and gaze recording. Drop the plugin in, then either call the VrLink subsystem nodes from Blueprint or place the VR Link component in a level.",
+	"Category": "MaMa Producties",
+	"CreatedBy": "MaMa Producties",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"EngineVersion": "5.8.0",
+	"CanContainContent": false,
+	"Installed": true,
+	"Modules": [
+		{
+			"Name": "VrLink",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
