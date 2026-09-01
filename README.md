@@ -34,7 +34,14 @@ so `git tag` shows you what you are on.
 That means the precompiled binary does not match your engine. Almost always it
 is one of two things:
 
-- You are not on **5.8**. The binary is tied to that version.
+- You are not on **5.8**. The binary is tied to that version. Switch to the
+  branch for your engine and the binary matches:
+
+      git checkout ue5.6      # Unreal Engine 5.6
+      git checkout ue5.7      # Unreal Engine 5.7
+      git checkout master     # Unreal Engine 5.8
+
+  Same source on every branch, only the compiled binary differs.
 - You are on a **source build** of the engine rather than the launcher build.
   Binaries are tied to a specific engine build ID, and the two do not match.
 
