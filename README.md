@@ -4,7 +4,7 @@ Connects an Unreal experience to the Neural Recorder tablet (the Muse EEG app).
 The plugin handles the network link, the session lifecycle, scene and scenario
 events, and gaze recording. You call it from Blueprint and nothing else changes.
 
-Built against **Unreal Engine 5.8**. It only uses stock engine modules (`Core`,
+Built against **Unreal Engine 5.6**. It only uses stock engine modules (`Core`,
 `CoreUObject`, `Engine`, `InputCore`, `Networking`, `Sockets`, `Json`), so there
 is nothing else to install.
 
