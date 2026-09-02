@@ -216,11 +216,18 @@ void UVrLinkSubsystem::EndScenario()
 {
 	if (UVrLinkComponent* Link = RequireLink(TEXT("EndScenario")))
 	{
-		// An empty value, not a label like "none". Analysis treats a variable event as
-		// the boundary that closes the previous window, so an empty one says a scenario
-		// ended and none began. A label would instead open a window under that name and
-		// the corridors would come back as a design in the results.
-		Link->SendState(TEXT("Scenario"), FString());
+		// The `fade` mark, which is what analysis already excludes on: the window runs
+		// from here to the next scene or variable event, so the next Start Scenario or
+		// Set Location closes it. Everything in between counts for nothing, which is
+		// exactly what a scenario having ended means.
+		//
+		// One mark and no second event, deliberately. A variable sent alongside it would
+		// carry the same timestamp and close the window it had just opened.
+		//
+		// It matters for gaze as much as for EEG. Rays cast between two scenarios still
+		// hit whatever the head is pointing at, and without this they are counted as
+		// somebody looking at the design that just ended.
+		Link->SendMark(TEXT("fade"));
 	}
 }
 
@@ -242,6 +249,16 @@ FString UVrLinkSubsystem::GetSessionId() const
 {
 	const UVrLinkComponent* Link = FindLink();
 	return Link ? Link->GetSessionId() : FString();
+}
+
+void UVrLinkSubsystem::StartBaseline(EVrLinkCalibrationPhase Phase)
+{
+	SendBaselinePhase(Phase, /*bStart=*/true);
+}
+
+void UVrLinkSubsystem::EndBaseline(EVrLinkCalibrationPhase Phase)
+{
+	SendBaselinePhase(Phase, /*bStart=*/false);
 }
 
 void UVrLinkSubsystem::SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bStart)

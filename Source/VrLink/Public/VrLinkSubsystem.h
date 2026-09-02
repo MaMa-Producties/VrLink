@@ -26,7 +26,7 @@ class UVrLinkComponent;
  *   2. `Start Session` when the ride starts. The tablet runs the participant's
  *      baseline automatically at session start; give it ~30 s of calm before
  *      the first stimulus.
- *   3. `Set Location` / `Set Scenario` from your triggers on EVERY change.
+ *   3. `Set Location` / `Start Scenario` from your triggers on EVERY change.
  *      These labels are what the analysis segments by; without them a
  *      recording cannot be attributed to a design.
  *   4. `End Session` when the ride ends.
@@ -100,20 +100,30 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
 	void SetLocation(const FString& Name);
 
-	/** The design variant now on display (e.g. "Green facade"). Call on every change. */
-	UFUNCTION(BlueprintCallable, Category = "VR Link")
+	/**
+	 * The design variant now on display (e.g. "Green facade"). Call on every change.
+	 *
+	 * Calling it again with another name starts that one, which is what ends this one:
+	 * only one design is on display at a time. EndScenario is for the other case, a
+	 * design stopping with nothing to replace it.
+	 *
+	 * Shown in Blueprint as Start Scenario, to pair with End Scenario. The C++ name is
+	 * deliberately left alone: nodes bind to that, and renaming it would turn every
+	 * existing call into a red error node in a graph nobody here can open.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VR Link", meta = (DisplayName = "Start Scenario"))
 	void SetScenario(const FString& Name);
 
 	/**
-	 * Ends the scenario now showing without starting another. Call it for the last
-	 * scenario of a run, and for any stretch where the participant is looking at no
-	 * design at all: a transition, a corridor, a loading area.
+	 * Ends the scenario now showing. Call it every time a design stops being shown,
+	 * whether another follows it or the ride is over.
 	 *
-	 * Without this a scenario ends only when the next one starts, so the last one runs
-	 * to the end of the session and every gap between two is credited to whichever came
-	 * before it.
+	 * Everything from here until the next Start Scenario or Set Location is thrown
+	 * away by analysis. That stretch is the participant between designs: a transition,
+	 * a corridor, a fade to black. It has no point of interest in it, and counted as
+	 * data it would be credited to the design that just ended.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "VR Link")
+	UFUNCTION(BlueprintCallable, Category = "VR Link", meta = (DisplayName = "End Scenario"))
 	void EndScenario();
 
 	/** Flags a moment of interest on the recording timeline. */
@@ -137,7 +147,20 @@ public:
 	 * because both are calibration; without the second pole the range has no upper
 	 * end and every value measured against it is wrong in the same direction.
 	 */
-	UFUNCTION(BlueprintCallable, Category = "VR Link|Advanced")
+	UFUNCTION(BlueprintCallable, Category = "VR Link|Calibration", meta = (DisplayName = "Start Baseline"))
+	void StartBaseline(EVrLinkCalibrationPhase Phase);
+
+	/**
+	 * Closes the calibration phase opened by Start Baseline. Pass the SAME phase.
+	 *
+	 * A phase left open runs to the end of the session, so the calibration swallows the
+	 * ride and there is nothing left to compare it against.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VR Link|Calibration", meta = (DisplayName = "End Baseline"))
+	void EndBaseline(EVrLinkCalibrationPhase Phase);
+
+	/** What both of the above call. Not exposed: a caller that can pass the wrong
+	  * boolean can open a phase twice and never close it. */
 	void SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bStart);
 
 private:
