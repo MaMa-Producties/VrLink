@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+// For FVrLinkCarriedSession, which is held by value below. One-directional: the
+// component header knows nothing about this one.
+#include "VrLinkComponent.h"
 #include "VrLinkSubsystem.generated.h"
 
 class UVrLinkComponent;
@@ -36,17 +39,48 @@ class UVrLinkComponent;
  * is left untouched: the subsystem finds and drives that one instead of
  * spawning its own.
  */
+/**
+ * The calibration poles, as a closed set.
+ *
+ * A free string here was a real hazard: the recorder keys its calibration window
+ * on the exact phase name, so a spelling it does not know ("calm", "negative")
+ * lands outside its predicate and the window closes early -- producing a baseline
+ * range that is quietly half of what it claims, with no error and no gap in the
+ * file. An enum makes that unspellable from Blueprint.
+ */
+UENUM(BlueprintType)
+enum class EVrLinkCalibrationPhase : uint8
+{
+	/** One undivided calibration stretch, when the experience does not split it. */
+	Baseline UMETA(DisplayName = "Baseline"),
+
+	/** The lower pole: the participant at rest. */
+	Relaxed UMETA(DisplayName = "Relaxed (lower pole)"),
+
+	/** The upper pole: the participant deliberately unsettled. */
+	Stressed UMETA(DisplayName = "Stressed (upper pole)")
+};
+
 UCLASS(DisplayName = "VR Link")
 class VRLINK_API UVrLinkSubsystem : public UGameInstanceSubsystem
 {
 	GENERATED_BODY()
 
 public:
+	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
+
 	/**
 	 * Makes the link exist and listen for the tablet. Safe to call more than
 	 * once. `ProjectName` is the study/project shown on the tablet (e.g.
 	 * "Spaklerweg"); `Posture` is the participant's body position, an EEG-noise
 	 * covariate ("Cycling" for the bike).
+	 *
+	 * Call it once, from the Game Instance. It is remembered, and the link is
+	 * rebuilt by itself in every level the participant is taken to -- the
+	 * subsystem outlives a level change but the actors in a level do not, so
+	 * without that the first Open Level would silently leave nothing to talk
+	 * to. The session keeps running across the change; only the actors are new.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
 	void InitializeVrLink(const FString& ProjectName, const FString& Posture = TEXT("Cycling"));
@@ -70,6 +104,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
 	void SetScenario(const FString& Name);
 
+	/**
+	 * Ends the scenario now showing without starting another. Call it for the last
+	 * scenario of a run, and for any stretch where the participant is looking at no
+	 * design at all: a transition, a corridor, a loading area.
+	 *
+	 * Without this a scenario ends only when the next one starts, so the last one runs
+	 * to the end of the session and every gap between two is credited to whichever came
+	 * before it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VR Link")
+	void EndScenario();
+
 	/** Flags a moment of interest on the recording timeline. */
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
 	void SendMark(const FString& Label);
@@ -83,12 +129,16 @@ public:
 	FString GetSessionId() const;
 
 	/**
-	 * Advanced, only for experiences that drive the calibration phases
-	 * themselves instead of letting the tablet time them: marks the start/end
-	 * of a baseline phase. Phase: baseline | relaxed | stressed.
+	 * For experiences that drive the calibration themselves instead of letting the
+	 * tablet time it: marks the start and end of a calibration phase.
+	 *
+	 * Call it around each pole. A calibration that is a relaxed half followed by a
+	 * stressed half needs all four calls, and the recorder keeps them as one window
+	 * because both are calibration; without the second pole the range has no upper
+	 * end and every value measured against it is wrong in the same direction.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "VR Link|Advanced")
-	void SendBaselinePhase(const FString& Phase, bool bStart);
+	void SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bStart);
 
 private:
 	/** The link being driven: the level's own if one exists, else the spawned one. */
@@ -97,8 +147,36 @@ private:
 	/** FindLink, with one keyed on-screen warning when there is nothing to drive. */
 	UVrLinkComponent* RequireLink(const TCHAR* ForCall) const;
 
+	/**
+	 * Builds the transport, link and gaze actors in `World`.
+	 *
+	 * Called once per level: the new-world delegate is bound in Initialize as a
+	 * lambda rather than a member function, because its signature names a type
+	 * nested inside UWorld and this header only forward-declares UWorld.
+	 */
+	void BuildLink(UWorld* World);
+
 	/** The actor this subsystem spawned to host the link (null when the level provided one). */
 	TWeakObjectPtr<AActor> SpawnedHost;
+
+	/**
+	 * What Initialize was called with, kept so a new level can be given the same link.
+	 * Empty until the first call, which is how `bConfigured` stays honest about whether
+	 * anyone has asked for a link at all.
+	 */
+	FString ConfiguredProject;
+	FString ConfiguredPosture;
+	bool bConfigured = false;
+
+	/** Handles for the world delegates, released on Deinitialize. */
+	FDelegateHandle WorldReadyHandle;
+	FDelegateHandle WorldTearDownHandle;
+
+	/**
+	 * A session in flight, held between one level being torn down and the next being
+	 * built. The tablet keeps recording throughout; only our end of it is rebuilt.
+	 */
+	FVrLinkCarriedSession CarriedSession;
 
 	/** Collapses duplicate consecutive SetLocation calls client-side. */
 	FString LastLocation;

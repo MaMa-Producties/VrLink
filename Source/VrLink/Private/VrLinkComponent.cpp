@@ -104,6 +104,17 @@ void UVrLinkComponent::BeginPlay()
 			Socket ? TEXT("found") : TEXT("MISSING"),
 			StudyConfig.PairingCode.IsEmpty() ? TEXT("any tablet") : *StudyConfig.PairingCode));
 
+	// Every start mode below describes how a session BEGINS, and none of them apply to
+	// one already running that was carried in from the previous level. Announcing
+	// "Waiting: call Start Experience" there is worse than noise: it is an instruction
+	// to call a node that would be refused, on a session that needs nothing done to it.
+	if (bSessionActive)
+	{
+		Announce(KeyWaiting, FColor::Green,
+			FString::Printf(TEXT("Resuming session %s from the previous level."), *SessionId));
+		return;
+	}
+
 	switch (StartMode)
 	{
 	case EExperienceStartMode::OnBeginPlay:
@@ -806,6 +817,45 @@ void UVrLinkComponent::BeginSessionClock(const FString& WallUtc)
 	SessionStartSeconds = FPlatformTime::Seconds();
 	SessionStartWallUtc = WallUtc;
 	bSessionActive = true;
+}
+
+FVrLinkCarriedSession UVrLinkComponent::CaptureSession() const
+{
+	FVrLinkCarriedSession Carried;
+	Carried.bActive = bSessionActive;
+	Carried.bHandshakeComplete = bHandshakeComplete;
+	Carried.SessionId = SessionId;
+	Carried.MuseId = MuseId;
+	Carried.ParticipantId = ParticipantId;
+	Carried.SessionFolder = SessionFolder;
+	Carried.GazeFilePath = GazeFilePath;
+	Carried.StartWallUtc = SessionStartWallUtc;
+	Carried.StartSeconds = SessionStartSeconds;
+	return Carried;
+}
+
+void UVrLinkComponent::RestoreSession(const FVrLinkCarriedSession& Carried)
+{
+	if (!Carried.bActive)
+	{
+		return;
+	}
+
+	bSessionActive = true;
+	bHandshakeComplete = Carried.bHandshakeComplete;
+	SessionId = Carried.SessionId;
+	MuseId = Carried.MuseId;
+	ParticipantId = Carried.ParticipantId;
+	SessionFolder = Carried.SessionFolder;
+	GazeFilePath = Carried.GazeFilePath;
+	SessionStartWallUtc = Carried.StartWallUtc;
+
+	// The clock is deliberately NOT restarted. SessionStartSeconds is a
+	// FPlatformTime::Seconds stamp, which counts from process start rather than from
+	// the level, so carrying it keeps every later event on the same timeline as the
+	// ones recorded before the level changed. Resetting it here would silently rewind
+	// Time to zero partway through a recording.
+	SessionStartSeconds = Carried.StartSeconds;
 }
 
 double UVrLinkComponent::SessionElapsedSeconds() const

@@ -82,7 +82,13 @@ void ATCPSocket::Tick(const float DeltaTime)
 void ATCPSocket::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	NetworkManager::GetInstance().OnDataReceived.RemoveDynamic(this, &ATCPSocket::ReceiveMessage);
-	if (DisconnectOnExit)
+
+	// A level change is not the end of anything. The server lives in a process-wide
+	// singleton and would happily survive an Open Level; stopping it here was what
+	// dropped the tablet's connection every time the participant moved to the next
+	// location, mid-recording, with nothing in the log to say why.
+	const bool bLeavingForAnotherLevel = EndPlayReason == EEndPlayReason::LevelTransition;
+	if (DisconnectOnExit && !bLeavingForAnotherLevel)
 		StopServer();
 
 	Super::EndPlay(EndPlayReason);

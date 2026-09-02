@@ -173,6 +173,28 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRecordingStarted, const FString&, S
  * if a UGazeRecorder is in the level; this component just publishes the session
  * state that recorder needs.
  */
+/**
+ * A running session, in a form that survives a level change.
+ *
+ * The component holding these lives in a level and dies with it, but the session does
+ * not: the tablet is still recording, the ids are still agreed, and the clock is
+ * `FPlatformTime::Seconds`, which is process-wide and keeps counting. So the subsystem
+ * carries this across and hands it to the component built in the next level.
+ */
+struct FVrLinkCarriedSession
+{
+	bool bActive = false;
+	bool bHandshakeComplete = false;
+	FString SessionId;
+	FString MuseId;
+	FString ParticipantId;
+	FString SessionFolder;
+	FString GazeFilePath;
+	FString StartWallUtc;
+	double StartSeconds = 0.0;
+};
+
+
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent, DisplayName = "VR Link"))
 class VRLINK_API UVrLinkComponent : public UActorComponent
 {
@@ -325,6 +347,17 @@ public:
 	 * the file the VR side wrote instead of reporting an empty string.
 	 */
 	void SetGazeFilePath(const FString& Path) { GazeFilePath = Path; }
+
+	/** The gaze file this session is writing, so a rebuilt recorder can carry on with it. */
+	FString GetGazeFilePath() const { return GazeFilePath; }
+
+	/** Everything about a running session that must outlive the level it started in. */
+	FVrLinkCarriedSession CaptureSession() const;
+
+	/** Adopt a session that began in a previous level. No traffic, no handshake: the
+	 *  tablet's connection and the session it agreed to are both still standing, and
+	 *  only the actors holding our end of it were destroyed. */
+	void RestoreSession(const FVrLinkCarriedSession& Carried);
 
 protected:
 	virtual void BeginPlay() override;

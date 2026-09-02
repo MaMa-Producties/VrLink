@@ -26,12 +26,92 @@ namespace
 	}
 }
 
+void UVrLinkSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+
+	// Every level the participant is taken to gets its link rebuilt. The subsystem
+	// lives on the Game Instance and survives a level change; the actors it spawns
+	// do not, so without this the first Open Level would leave InitializeVrLink
+	// looking like it had never been called -- which is exactly what it looked like.
+	WorldReadyHandle = FWorldDelegates::OnPostWorldInitialization.AddWeakLambda(
+		this,
+		[this](UWorld* World, const UWorld::InitializationValues)
+		{
+			// Only once somebody has asked for a link, and only for a world this
+			// game instance is actually running. Editor preview and asset-thumbnail
+			// worlds raise this delegate too, and spawning a socket server into one
+			// of those would fight the real session for the port.
+			if (!bConfigured || World == nullptr)
+			{
+				return;
+			}
+			const bool bPlayable =
+				World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE;
+			if (!bPlayable || World->GetGameInstance() != GetGameInstance())
+			{
+				return;
+			}
+
+			SpawnedHost.Reset();
+			BuildLink(World);
+		});
+
+	// Caught while the OUTGOING world is still standing, which is the only moment the
+	// component holding the session can still be asked for it. By the time the next
+	// world is initialised it has already gone.
+	WorldTearDownHandle = FWorldDelegates::OnWorldBeginTearDown.AddWeakLambda(
+		this,
+		[this](UWorld* World)
+		{
+			if (!bConfigured || World == nullptr || GetGameInstance() == nullptr)
+			{
+				return;
+			}
+			if (World->GetGameInstance() != GetGameInstance())
+			{
+				return;
+			}
+			if (const UVrLinkComponent* Link = FindLink())
+			{
+				CarriedSession = Link->CaptureSession();
+			}
+		});
+}
+
+void UVrLinkSubsystem::Deinitialize()
+{
+	FWorldDelegates::OnPostWorldInitialization.Remove(WorldReadyHandle);
+	FWorldDelegates::OnWorldBeginTearDown.Remove(WorldTearDownHandle);
+	Super::Deinitialize();
+}
+
 void UVrLinkSubsystem::InitializeVrLink(const FString& ProjectName, const FString& Posture)
 {
+	// Remembered before anything else, so a call from Game Instance Init -- which
+	// happens before any world exists -- still configures the link. The first level
+	// to open then builds it. That is the natural place to call this from, and it
+	// used to be the one place it did not work.
+	ConfiguredProject = ProjectName;
+	ConfiguredPosture = Posture;
+	bConfigured = true;
+
 	UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
 	if (!World)
 	{
-		Warn(TEXT("InitializeVrLink: no world yet; call it from BeginPlay or later."));
+		UE_LOG(LogVrLinkSubsystem, Log,
+			TEXT("InitializeVrLink: no world yet, remembered '%s' and building at the first level."),
+			*ProjectName);
+		return;
+	}
+
+	BuildLink(World);
+}
+
+void UVrLinkSubsystem::BuildLink(UWorld* World)
+{
+	if (!World)
+	{
 		return;
 	}
 
@@ -39,7 +119,7 @@ void UVrLinkSubsystem::InitializeVrLink(const FString& ProjectName, const FStrin
 	// configure nothing, spawn nothing, drive that one.
 	if (UVrLinkComponent* Existing = FindLink())
 	{
-		UE_LOG(LogVrLinkSubsystem, Log, TEXT("InitializeVrLink: using the level's own VR Link on %s."),
+		UE_LOG(LogVrLinkSubsystem, Log, TEXT("VR Link: using the level's own on %s."),
 			*GetNameSafe(Existing->GetOwner()));
 		return;
 	}
@@ -53,7 +133,7 @@ void UVrLinkSubsystem::InitializeVrLink(const FString& ProjectName, const FStrin
 	AActor* Host = World->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity, Params);
 	if (!Host)
 	{
-		Warn(TEXT("InitializeVrLink: could not spawn the link host actor."));
+		Warn(TEXT("VR Link: could not spawn the link host actor."));
 		return;
 	}
 #if WITH_EDITOR
@@ -66,8 +146,15 @@ void UVrLinkSubsystem::InitializeVrLink(const FString& ProjectName, const FStrin
 	// not a table, drives this integration.
 	UVrLinkComponent* Link = NewObject<UVrLinkComponent>(Host, TEXT("VrLink"));
 	Link->StartMode = EExperienceStartMode::OnTrigger;
-	Link->StudyConfig.Experience = ProjectName;
-	Link->StudyConfig.Posture = Posture;
+	Link->StudyConfig.Experience = ConfiguredProject;
+	Link->StudyConfig.Posture = ConfiguredPosture;
+
+	// Adopted BEFORE the component begins play, not after. BeginPlay decides what to
+	// announce, and a link that is told about the carried session only afterwards spends
+	// that moment believing no recording exists: it prints "Waiting: call Start
+	// Experience" on every level of a running session, sending whoever is integrating
+	// to look for a node they must not call.
+	Link->RestoreSession(CarriedSession);
 	Link->RegisterComponent();
 
 	// Gaze rides along; it follows the session by itself.
@@ -75,8 +162,8 @@ void UVrLinkSubsystem::InitializeVrLink(const FString& ProjectName, const FStrin
 	Gaze->VrLink = Link;
 	Gaze->RegisterComponent();
 
-	UE_LOG(LogVrLinkSubsystem, Log, TEXT("InitializeVrLink: spawned link + gaze for project '%s' (posture %s)."),
-		*ProjectName, *Posture);
+	UE_LOG(LogVrLinkSubsystem, Log, TEXT("VR Link: built link + gaze for project '%s' (posture %s)."),
+		*ConfiguredProject, *ConfiguredPosture);
 }
 
 void UVrLinkSubsystem::StartSession()
@@ -90,6 +177,10 @@ void UVrLinkSubsystem::StartSession()
 
 void UVrLinkSubsystem::EndSession(const FString& Reason)
 {
+	// Nothing to carry once it is over. Without this the next participant's first
+	// level would adopt the previous participant's session id.
+	CarriedSession = FVrLinkCarriedSession();
+
 	if (UVrLinkComponent* Link = RequireLink(TEXT("EndSession")))
 	{
 		Link->EndSession(Reason.IsEmpty() ? TEXT("complete") : Reason);
@@ -121,6 +212,18 @@ void UVrLinkSubsystem::SetScenario(const FString& Name)
 	}
 }
 
+void UVrLinkSubsystem::EndScenario()
+{
+	if (UVrLinkComponent* Link = RequireLink(TEXT("EndScenario")))
+	{
+		// An empty value, not a label like "none". Analysis treats a variable event as
+		// the boundary that closes the previous window, so an empty one says a scenario
+		// ended and none began. A label would instead open a window under that name and
+		// the corridors would come back as a design in the results.
+		Link->SendState(TEXT("Scenario"), FString());
+	}
+}
+
 void UVrLinkSubsystem::SendMark(const FString& Label)
 {
 	if (UVrLinkComponent* Link = RequireLink(TEXT("SendMark")))
@@ -141,11 +244,22 @@ FString UVrLinkSubsystem::GetSessionId() const
 	return Link ? Link->GetSessionId() : FString();
 }
 
-void UVrLinkSubsystem::SendBaselinePhase(const FString& Phase, bool bStart)
+void UVrLinkSubsystem::SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bStart)
 {
+	// The exact strings the recorder pins its calibration predicate to. Changing one
+	// of these silently changes which rows the tablet treats as calibration, so they
+	// are written out here rather than derived from the enum's own names.
+	const TCHAR* Name = TEXT("baseline");
+	switch (Phase)
+	{
+	case EVrLinkCalibrationPhase::Relaxed:  Name = TEXT("relaxed");  break;
+	case EVrLinkCalibrationPhase::Stressed: Name = TEXT("stressed"); break;
+	case EVrLinkCalibrationPhase::Baseline: break;
+	}
+
 	if (UVrLinkComponent* Link = RequireLink(TEXT("SendBaselinePhase")))
 	{
-		Link->SendBaseline(Phase.IsEmpty() ? TEXT("baseline") : Phase, bStart);
+		Link->SendBaseline(Name, bStart);
 	}
 }
 
