@@ -304,8 +304,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VrLink")
 	void SendState(const FString& Name, const FString& Value);
 
-	/** Sends a `baseline.start` (bStart=true) or `baseline.end` event for the given phase. */
-	UFUNCTION(BlueprintCallable, Category = "VrLink")
+	/**
+	 * Sends a `baseline.start` (bStart=true) or `baseline.end` event for the given phase.
+	 *
+	 * Deliberately NOT BlueprintCallable. Phase is free text that the tablet matches
+	 * against three exact words, so "Relaxed", "rest" or "stress" are all accepted
+	 * here, sent, and then not counted as calibration by anything downstream. Nothing
+	 * reports the mistake and the session looks fine until the analysis has no
+	 * baseline to calibrate against.
+	 *
+	 * Blueprint gets UVrLinkSubsystem::SendBaselinePhase instead, which takes the
+	 * choice as a dropdown and writes the exact word here.
+	 */
 	void SendBaseline(const FString& Phase, bool bStart);
 
 	/** Sends a `mark` (trigger/marker) event to Unity, which records it. */

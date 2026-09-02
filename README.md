@@ -59,29 +59,58 @@ search for the node name. There is no actor to place and no reference to wire up
 | `Initialize Vr Link` | Once, on level start | Names the project and finds the tablet on the LAN |
 | `Start Session` | When the ride begins | Tells the tablet to start recording |
 | `Set Location` | On entering each area | Writes a `scene` row, meaning **where** they are |
-| `Set Scenario` | When the design variant changes | Writes a `variable` row, meaning **which design** is showing |
-| `End Scenario` | When a design stops being shown | Ends it without starting another, for the last one and for gaps |
+| `Start Scenario` | When a design goes on display | Writes a `variable` row, meaning **which design** is showing |
+| `End Scenario` | When a design stops being shown | Everything until the next design is ignored by the analysis |
 | `Send Mark` | Anything worth flagging | A timestamped note in the log |
 | `End Session` | When the ride finishes | Stops the recording cleanly |
 | `Is Session Active` | Any time | True while recording |
-| `Send Baseline Phase` | **Required**, four calls before the ride | Marks the relaxed and stressed windows, see below |
+| `Start Baseline` | **Required**, before the ride | Opens a calibration phase, see below |
+| `End Baseline` | **Required**, closes each phase | Closes the phase of the same name |
 
 ### The one thing that matters most
 
-**`Set Location` and `Set Scenario` are not interchangeable.**
+**`Set Location` and `Start Scenario` are not interchangeable.**
 
 - `Set Location` is *where the participant is*: "Location 1", "Spaklerweg north".
-- `Set Scenario` is *which design they are being shown*: "Green facade", "Grey facade".
+- `Start Scenario` is *which design they are being shown*: "Green facade", "Grey facade".
 
 The analysis compares designs **within** a location, so it needs both, kept
 separate. If the design variant is sent as a location, the report ends up
 comparing two streets instead of two designs, and the study cannot answer its
 own question.
 
+### A whole run
+
+```
+Start Session
+Start Baseline  (Relaxed)    ...   End Baseline (Relaxed)
+Start Baseline  (Stressed)   ...   End Baseline (Stressed)
+
+Set Location    "Spaklerweg north"
+Start Scenario  "Green facade"    ...   End Scenario
+Start Scenario  "Grey facade"     ...   End Scenario
+
+Set Location    "Menadostraat"
+Start Scenario  "Blue lights"     ...   End Scenario
+Start Scenario  "Grey facade"     ...   End Scenario
+
+End Session
+```
+
+**Call `End Scenario` every time a design stops being shown**, even when another
+one follows it straight away. Everything between it and the next `Start Scenario`
+or `Set Location` is thrown away by the analysis: transitions, corridors, a fade
+to black. That stretch has no design in it, and left unmarked it is credited to
+the design that just ended.
+
+This matters for gaze as much as for the EEG. Between two designs the head is
+still pointing at something, and those rays would otherwise be counted as
+somebody looking at the design that has already gone.
+
 ### One session per ride, not per trigger
 
 Call `Start Session` once when the participant sets off and `End Session` once when
-they finish, then use `Set Location` and `Set Scenario` on your existing trigger
+they finish, then use `Set Location` and `Start Scenario` on your existing trigger
 volumes as they ride through.
 
 Do not start and stop a session at each trigger. Every session needs its own
@@ -108,17 +137,17 @@ times how *long* calibration runs, but it has no stressed phase of its own. A
 stressed window only ever exists because the VR experience declared it. Left to
 the tablet alone, the range spans rest only and the stressed half never happens.
 
-The node takes a phase name **and a start/end boolean**, so it is four calls
-rather than two, before the ride begins:
+Each phase is opened and closed, so it is four calls rather than two, before
+the ride begins:
 
 ```
-Send Baseline Phase ("relaxed",  bStart = true)    <- calibration begins
-Send Baseline Phase ("relaxed",  bStart = false)
-Send Baseline Phase ("stressed", bStart = true)
-Send Baseline Phase ("stressed", bStart = false)   <- ride can start
+Start Baseline (Relaxed)     <- calibration begins
+End Baseline   (Relaxed)
+Start Baseline (Stressed)
+End Baseline   (Stressed)    <- ride can start
 ```
 
-**Send `relaxed` before `stressed`.** The recorder closes the calibration window
+**Do `Relaxed` before `Stressed`.** The recorder closes the calibration window
 at the first exit from a rest phase, so the order is not cosmetic. Reversed, the
 window lands in the wrong place and every later number is referenced to the
 wrong thing.
