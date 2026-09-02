@@ -60,6 +60,7 @@ search for the node name. There is no actor to place and no reference to wire up
 | `Start Session` | When the ride begins | Tells the tablet to start recording |
 | `Set Location` | On entering each area | Writes a `scene` row, meaning **where** they are |
 | `Set Scenario` | When the design variant changes | Writes a `variable` row, meaning **which design** is showing |
+| `End Scenario` | When a design stops being shown | Ends it without starting another, for the last one and for gaps |
 | `Send Mark` | Anything worth flagging | A timestamped note in the log |
 | `End Session` | When the ride finishes | Stops the recording cleanly |
 | `Is Session Active` | Any time | True while recording |
@@ -69,7 +70,7 @@ search for the node name. There is no actor to place and no reference to wire up
 
 **`Set Location` and `Set Scenario` are not interchangeable.**
 
-- `Set Location` is *where the rider is*: "Location 1", "Spaklerweg north".
+- `Set Location` is *where the participant is*: "Location 1", "Spaklerweg north".
 - `Set Scenario` is *which design they are being shown*: "Green facade", "Grey facade".
 
 The analysis compares designs **within** a location, so it needs both, kept
@@ -79,13 +80,13 @@ own question.
 
 ### One session per ride, not per trigger
 
-Call `Start Session` once when the rider sets off and `End Session` once when
+Call `Start Session` once when the participant sets off and `End Session` once when
 they finish, then use `Set Location` and `Set Scenario` on your existing trigger
 volumes as they ride through.
 
 Do not start and stop a session at each trigger. Every session needs its own
 calibration baseline to be interpretable, and each one also prompts the
-participant for a questionnaire, so ten sessions per rider means ten
+participant for a questionnaire, so ten sessions per participant means ten
 questionnaires and ten uncalibrated fragments.
 
 ### The baseline is two phases, not one

@@ -2,6 +2,9 @@
 
 
 #include "GazeRecorder.h"
+
+#include "EyeTrackerFunctionLibrary.h"
+#include "IEyeTracker.h"
 #include "GameFramework/Pawn.h"
 #include "VrLinkComponent.h"
 #include "Camera/PlayerCameraManager.h"
@@ -29,8 +32,13 @@ namespace
 		TEXT("SessionId,Time,WallUtc,Source,Valid,GazeX,GazeY,HitObject,")
 		TEXT("HeadX,HeadY,HeadZ,DirX,DirY,DirZ,HitX,HitY,HitZ,Scene\n");
 
-	/** `head` today. Eye tracking writes `eye` into the same file when it lands. */
+	/**
+	 * What produced the ray for a row. The analysis reads this per row and widens or
+	 * tightens the heat map to match, so a session that loses tracking partway through
+	 * is still read correctly rather than being all one thing or the other.
+	 */
 	const TCHAR* const GazeSourceHead = TEXT("head");
+	const TCHAR* const GazeSourceEye = TEXT("eye");
 
 	/** RFC-4180 quoting, matching the recorder's own Csv() so both sides quote alike. */
 	FString Csv(const FString& Value)
@@ -106,7 +114,16 @@ void UGazeRecorder::BeginPlay()
 
 void UGazeRecorder::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	// Stopping play mid-session must still leave a complete, readable file.
+	// Stopping play mid-session must still leave a complete, readable file. A level
+	// change is not stopping: the rows written so far are flushed and the file is left
+	// for the recorder built in the next level to carry on with, because closing it
+	// here ended the gaze recording at the first location every time.
+	if (EndPlayReason == EEndPlayReason::LevelTransition)
+	{
+		Flush();
+		return;
+	}
+
 	CloseFile();
 
 	Super::EndPlay(EndPlayReason);
@@ -184,6 +201,20 @@ void UGazeRecorder::OpenFile()
 	RecordingSessionId = SessionId;
 	GazeFilePath = FPaths::Combine(Directory, Sanitize(RecordingSessionId) + TEXT("_gaze.csv"));
 
+	// A session that began in an earlier level already has its file open and its header
+	// written. Carry on appending to it: writing the header again would put a second
+	// one in the middle of the CSV, and truncating would throw away every row recorded
+	// before the participant moved.
+	const FString Carried = VrLink->GetGazeFilePath();
+	if (!Carried.IsEmpty() && Carried == GazeFilePath
+		&& IFileManager::Get().FileExists(*GazeFilePath))
+	{
+		RowBuffer.Reset();
+		bRecording = true;
+		Announce(FColor::Green, FString::Printf(TEXT("Continuing -> %s"), *GazeFilePath));
+		return;
+	}
+
 	// Truncating write, so a re-run of the same session id never appends to a stale file.
 	if (!FFileHelper::SaveStringToFile(FString(GazeCsvHeader), *GazeFilePath,
 			FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
@@ -203,6 +234,15 @@ void UGazeRecorder::OpenFile()
 	// So `session.saved` can name the file, and the operator sees on the tablet that
 	// the PC wrote its half of the session.
 	VrLink->SetGazeFilePath(GazeFilePath);
+
+	// Said once, at the top of the session, because neither Source nor Valid can say
+	// it. A file of nothing but head rows is either a session with no eye-tracking
+	// hardware at all or one where tracking never cleared threshold, and those mean
+	// very different things to whoever reads the numbers: the first has no eye data
+	// to be missing, the second has eye data that failed. Without this the only way
+	// to tell them apart is to ask whoever ran the session.
+	const bool bTracker = bPreferEyeTracking && UEyeTrackerFunctionLibrary::IsEyeTrackerConnected();
+	VrLink->SendMark(bTracker ? TEXT("eyetracker:present") : TEXT("eyetracker:absent"));
 
 	Announce(FColor::Green, FString::Printf(TEXT("Recording -> %s"), *GazeFilePath));
 }
@@ -231,10 +271,29 @@ void UGazeRecorder::CaptureSample()
 	}
 
 	// The head pose is the camera pose: in VR the camera is driven by the HMD, so this is
-	// where the participant's head is and which way it faces.
+	// where the participant's head is and which way it faces. It is recorded on every row
+	// whichever ray is traced, because where somebody stood is worth knowing either way --
+	// the 3D view puts its camera there.
 	const FVector Head = Camera->GetCameraLocation();
-	const FVector Direction = Camera->GetCameraRotation().Vector();
-	const FVector RayEnd = Head + Direction * MaxTraceDistance;
+	const FVector HeadDirection = Camera->GetCameraRotation().Vector();
+
+	// Eye gaze when the headset offers it and the tracker is confident, the head ray
+	// otherwise. Deciding per row rather than per session: confidence collapses during a
+	// blink, and those rows are worth keeping as head rows rather than losing.
+	FVector Origin = Head;
+	FVector Direction = HeadDirection;
+	const bool bEye = TryEyeGaze(Origin, Direction);
+
+	if (bEye != bEyeGazeInUse || !bEyeGazeAnnounced)
+	{
+		bEyeGazeAnnounced = true;
+		Announce(bEye ? FColor::Green : FColor::Yellow,
+			bEye ? TEXT("Eye tracking active: rows record Source=eye.")
+			     : TEXT("No eye tracking: rows record Source=head."));
+	}
+	bEyeGazeInUse = bEye;
+
+	const FVector RayEnd = Origin + Direction * MaxTraceDistance;
 
 	FCollisionQueryParams Params(FName(TEXT("GazeTrace")), /*bTraceComplex=*/false);
 	Params.AddIgnoredActor(GetOwner());
@@ -244,7 +303,7 @@ void UGazeRecorder::CaptureSample()
 	}
 
 	FHitResult Hit;
-	const bool bHit = World->LineTraceSingleByChannel(Hit, Head, RayEnd, TraceChannel, Params);
+	const bool bHit = World->LineTraceSingleByChannel(Hit, Origin, RayEnd, TraceChannel, Params);
 
 	// A miss is still a real sample (they are looking at the sky, or past everything).
 	// It records the far end of the ray with an empty HitObject rather than being dropped.
@@ -275,7 +334,7 @@ void UGazeRecorder::CaptureSample()
 
 	RowBuffer += FString::Printf(
 		TEXT("%s,%.3f,%s,%s,1,%s,%s,%s,%.1f,%.1f,%.1f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f,%s\n"),
-		*Csv(RecordingSessionId), Time, *WallUtc, GazeSourceHead,
+		*Csv(RecordingSessionId), Time, *WallUtc, bEye ? GazeSourceEye : GazeSourceHead,
 		*GazeX, *GazeY, *Csv(HitObject),
 		Head.X, Head.Y, Head.Z,
 		Direction.X, Direction.Y, Direction.Z,
@@ -283,6 +342,46 @@ void UGazeRecorder::CaptureSample()
 		*Csv(VrLink->GetCurrentScene()));
 
 	++RowCount;
+}
+
+bool UGazeRecorder::TryEyeGaze(FVector& OutOrigin, FVector& OutDirection) const
+{
+	if (!bPreferEyeTracking)
+	{
+		return false;
+	}
+
+	// Asked every frame rather than cached: a tracker can be plugged in, calibrated or lost
+	// mid-session, and the call is a cheap flag read.
+	if (!UEyeTrackerFunctionLibrary::IsEyeTrackerConnected())
+	{
+		return false;
+	}
+
+	FEyeTrackerGazeData Data;
+	if (!UEyeTrackerFunctionLibrary::GetGazeData(Data))
+	{
+		return false;
+	}
+
+	// Confidence is not reported by every runtime; the ones that do not leave it at 0, which
+	// would reject every sample. A zero is read as "not reported" and allowed through, so a
+	// tracker that answers with a direction is trusted to have meant it.
+	if (Data.ConfidenceValue > 0.f && Data.ConfidenceValue < MinEyeConfidence)
+	{
+		return false;
+	}
+
+	if (Data.GazeDirection.IsNearlyZero())
+	{
+		return false;
+	}
+
+	// World space already: the eye tracker module applies the HMD pose, so this ray can be
+	// traced against the level exactly as the camera ray is.
+	OutOrigin = Data.GazeOrigin;
+	OutDirection = Data.GazeDirection.GetSafeNormal();
+	return true;
 }
 
 void UGazeRecorder::Flush()

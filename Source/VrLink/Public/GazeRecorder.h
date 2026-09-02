@@ -68,6 +68,42 @@ public:
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 
 	/**
+	 * Use the eye tracker's gaze ray when the headset has one, and the head ray when it does not.
+	 *
+	 * Safe to leave on before any eye-tracking hardware arrives: with no tracker connected this
+	 * changes nothing at all, and every row still records `head`. The moment a headset that
+	 * supports it is plugged in, rows start recording `eye` instead, with no rebuild and no
+	 * change to the file format.
+	 *
+	 * Why it matters to the analysis: a head ray is not where somebody is looking. People turn
+	 * their eyes first and their head only partway, so the head ray marks a region of attention
+	 * roughly seven degrees wide, which across a street is more than a metre. Eye gaze is nearer
+	 * one degree. The heat map widens or tightens to match, per row, from the `Source` column --
+	 * so a recording that switches mid-session is still read correctly.
+	 *
+	 * Turn it off to force head gaze, for instance to keep one test day consistent with an
+	 * earlier one recorded before the hardware arrived.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gaze")
+	bool bPreferEyeTracking = true;
+
+	/**
+	 * Below this confidence the eye tracker's answer is not used and the row falls back to the
+	 * head ray, recording `head`.
+	 *
+	 * Confidence collapses during a blink and while the tracker is losing the eye behind
+	 * spectacles. Those rows are not dropped -- a blink is not a look away, and losing them
+	 * would leave holes in the dwell -- they simply revert to the less precise ray, which is
+	 * still true about where the participant was facing.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gaze", meta = (ClampMin = "0.0", ClampMax = "1.0", UIMin = "0.0", UIMax = "1.0"))
+	float MinEyeConfidence = 0.5f;
+
+	/** Whether eye gaze is being used right now, as opposed to falling back to the head ray. */
+	UFUNCTION(BlueprintPure, Category = "Gaze")
+	bool IsUsingEyeTracking() const { return bEyeGazeInUse; }
+
+	/**
 	 * Prefer an actor's first Tag over its object name for `HitObject`.
 	 *
 	 * This is the difference between an analysis column full of `StaticMeshActor_12`
@@ -107,6 +143,21 @@ protected:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:
+	/**
+	 * The eye tracker's ray for this frame, in world space, if it can be trusted.
+	 *
+	 * False whenever eye tracking is switched off, no tracker is connected, the runtime has no
+	 * sample this frame, or confidence is below `MinEyeConfidence`. The caller then uses the
+	 * head ray and records `head`, so a false here is an ordinary outcome and never an error.
+	 */
+	bool TryEyeGaze(FVector& OutOrigin, FVector& OutDirection) const;
+
+	/** Whether the last sample used the eye tracker. Drives `Source` and the one-off announcement. */
+	bool bEyeGazeInUse = false;
+
+	/** So the switch to or from eye tracking is announced when it happens, not every frame. */
+	bool bEyeGazeAnnounced = false;
+
 	/** Opens the file for the session VrLink is running, writes the header. */
 	void OpenFile();
 
