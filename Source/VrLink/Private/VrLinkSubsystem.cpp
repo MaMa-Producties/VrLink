@@ -306,12 +306,36 @@ UVrLinkComponent* UVrLinkSubsystem::FindLink() const
 	return nullptr;
 }
 
-UVrLinkComponent* UVrLinkSubsystem::RequireLink(const TCHAR* ForCall) const
+UVrLinkComponent* UVrLinkSubsystem::RequireLink(const TCHAR* ForCall)
 {
-	UVrLinkComponent* Link = FindLink();
-	if (!Link)
+	if (UVrLinkComponent* Link = FindLink())
 	{
-		Warn(FString::Printf(TEXT("%s: no VR Link in the level. Call Initialize Vr Link first."), ForCall));
+		return Link;
 	}
-	return Link;
+
+	// Nothing here yet. If the caller has said which project this is, that is
+	// everything needed to build one, so build it rather than refusing and
+	// telling them to do what they already did.
+	UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
+	if (bConfigured && World != nullptr)
+	{
+		UE_LOG(LogVrLinkSubsystem, Log,
+			TEXT("VR Link: %s arrived before the link existed in %s; building it now."),
+			ForCall, *GetNameSafe(World));
+		SpawnedHost.Reset();
+		BuildLink(World);
+		if (UVrLinkComponent* Built = FindLink())
+		{
+			return Built;
+		}
+	}
+
+	// Now the message means what it says: either Initialize Vr Link was never
+	// called, or there is no world to build into.
+	// Each Printf takes a literal format: the checked-format macro will not accept
+	// one chosen at run time, so the choice is made over whole messages instead.
+	Warn(bConfigured
+		? FString::Printf(TEXT("%s: no world to build the VR Link into yet. Call it once play has started."), ForCall)
+		: FString::Printf(TEXT("%s: Initialize Vr Link has not been called. Call it from the Game Instance."), ForCall));
+	return nullptr;
 }

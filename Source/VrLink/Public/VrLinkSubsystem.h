@@ -167,8 +167,19 @@ private:
 	/** The link being driven: the level's own if one exists, else the spawned one. */
 	UVrLinkComponent* FindLink() const;
 
-	/** FindLink, with one keyed on-screen warning when there is nothing to drive. */
-	UVrLinkComponent* RequireLink(const TCHAR* ForCall) const;
+	/**
+	 * The link to drive, built now if the level has not got one yet.
+	 *
+	 * Not const, and not merely FindLink with a warning attached, because the
+	 * delegate that builds the link fires at a moment the subsystem does not
+	 * control: how early a world is initialised relative to the game instance
+	 * differs between PIE, a packaged run and a level change, and when it lands
+	 * on the wrong side every single call warns that Initialize was never called
+	 * when it was. Building on demand removes the ordering from the question.
+	 *
+	 * Warns only when it still cannot produce one, which now means something.
+	 */
+	UVrLinkComponent* RequireLink(const TCHAR* ForCall);
 
 	/**
 	 * Builds the transport, link and gaze actors in `World`.
