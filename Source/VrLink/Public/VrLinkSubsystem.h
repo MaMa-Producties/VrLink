@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Containers/Ticker.h"
 // For FVrLinkCarriedSession, which is held by value below. One-directional: the
 // component header knows nothing about this one.
 #include "VrLinkComponent.h"
@@ -205,6 +206,23 @@ private:
 	/** Handles for the world delegates, released on Deinitialize. */
 	FDelegateHandle WorldReadyHandle;
 	FDelegateHandle WorldTearDownHandle;
+
+	/**
+	 * Builds the link the moment a playable world exists, then stops.
+	 *
+	 * The world delegate above fires at a moment that differs between PIE, a
+	 * packaged run and a level change, and when it is missed nothing is built.
+	 * That is not merely a warning: the socket SERVER lives on the spawned
+	 * ATCPSocket and starts in its BeginPlay, so an unbuilt link means no port
+	 * is ever opened and the tablet cannot connect however long it waits.
+	 * Nothing on the VR side has to be called for that to happen, so there is
+	 * no call to build it lazily from either.
+	 */
+	FTSTicker::FDelegateHandle BuildTickHandle;
+
+	/** One line on screen saying whether the link is up and the tablet is on it. */
+	void ReportStatus();
+	FTSTicker::FDelegateHandle StatusTickHandle;
 
 	/**
 	 * A session in flight, held between one level being torn down and the next being

@@ -9,12 +9,19 @@
 #include "GazeRecorder.h"
 #include "TCPSocket.h"
 #include "VrLinkComponent.h"
+#include "NetworkManager.h"
+#include "Containers/Ticker.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogVrLinkSubsystem, Log, All);
 
 namespace
 {
 	constexpr int32 KeyWarn = 8806;
+	constexpr uint64 KeyStatusLine = 8807;
+	/** Mirrors ATCPSocket's default (TCPSocket.cpp:33). Shown, not used to bind.
+	  * If that default ever changes this line goes stale, which is why it says
+	  * where it came from. */
+	constexpr int32 VRLINK_STATUS_PORT = 3030;
 
 	void Warn(const FString& Message)
 	{
@@ -60,6 +67,44 @@ void UVrLinkSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// Caught while the OUTGOING world is still standing, which is the only moment the
 	// component holding the session can still be asked for it. By the time the next
 	// world is initialised it has already gone.
+	// Build as soon as there IS a world, whatever the delegates did. A missed
+	// world delegate does not merely warn: the socket server starts in the
+	// spawned ATCPSocket's BeginPlay, so nothing built means no port open and a
+	// tablet that waits forever. The experience need never call anything for
+	// that to happen, so there is no call to hang a lazy build off either.
+	BuildTickHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this](float) -> bool
+		{
+			if (!bConfigured)
+			{
+				return true;                    // nothing asked for yet, keep looking
+			}
+			if (FindLink())
+			{
+				return false;                   // built; stop ticking
+			}
+			UWorld* World = GetGameInstance() ? GetGameInstance()->GetWorld() : nullptr;
+			if (World && (World->WorldType == EWorldType::Game || World->WorldType == EWorldType::PIE))
+			{
+				SpawnedHost.Reset();
+				BuildLink(World);
+				UE_LOG(LogVrLinkSubsystem, Log, TEXT("VR Link: built from the ticker; the world delegate did not reach us."));
+			}
+			return true;
+		}),
+		0.25f);
+
+	// The on-screen line. Whether the link is up and whether the tablet is on it
+	// are the two facts nothing else on screen answers, and their absence is
+	// indistinguishable from the plugin not being loaded at all.
+	StatusTickHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this](float) -> bool
+		{
+			ReportStatus();
+			return true;
+		}),
+		1.0f);
+
 	WorldTearDownHandle = FWorldDelegates::OnWorldBeginTearDown.AddWeakLambda(
 		this,
 		[this](UWorld* World)
@@ -81,6 +126,8 @@ void UVrLinkSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UVrLinkSubsystem::Deinitialize()
 {
+	FTSTicker::GetCoreTicker().RemoveTicker(BuildTickHandle);
+	FTSTicker::GetCoreTicker().RemoveTicker(StatusTickHandle);
 	FWorldDelegates::OnPostWorldInitialization.Remove(WorldReadyHandle);
 	FWorldDelegates::OnWorldBeginTearDown.Remove(WorldTearDownHandle);
 	Super::Deinitialize();
@@ -278,6 +325,51 @@ void UVrLinkSubsystem::SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bSt
 	{
 		Link->SendBaseline(Name, bStart);
 	}
+}
+
+void UVrLinkSubsystem::ReportStatus()
+{
+	if (!GEngine)
+	{
+		return;
+	}
+
+	// Keyed, so it rewrites one line rather than scrolling. Deliberately shown
+	// even when nothing is set up: "no line at all" is what the operator saw
+	// while the link was silently never built, and it is indistinguishable from
+	// the plugin not being installed.
+	const UVrLinkComponent* Link = FindLink();
+	const bool bListening = NetworkManager::GetInstance().IsServerListening();
+	const bool bConnected = NetworkManager::GetInstance().IsSocketConnected();
+
+	FString Line;
+	FColor Colour = FColor::Red;
+	if (!bConfigured)
+	{
+		Line = TEXT("[VR Link] Initialize Vr Link has not been called.");
+	}
+	else if (!Link)
+	{
+		Line = TEXT("[VR Link] configured, no link built yet (no world?).");
+	}
+	else if (!bListening)
+	{
+		Line = TEXT("[VR Link] link up, but the server is NOT listening. The tablet cannot connect.");
+	}
+	else if (!bConnected)
+	{
+		Line = FString::Printf(
+			TEXT("[VR Link] listening on port %d, waiting for the tablet."), VRLINK_STATUS_PORT);
+		Colour = FColor::Yellow;
+	}
+	else
+	{
+		Line = FString::Printf(TEXT("[VR Link] tablet connected. Session %s"),
+			Link->IsSessionActive() ? *Link->GetSessionId() : TEXT("not started"));
+		Colour = FColor::Green;
+	}
+
+	GEngine->AddOnScreenDebugMessage(KeyStatusLine, 1.5f, Colour, Line);
 }
 
 UVrLinkComponent* UVrLinkSubsystem::FindLink() const
