@@ -138,6 +138,65 @@ DEFINE_FUNCTION(UGazeRecorder::execIsRecording)
 }
 // ********** End Class UGazeRecorder Function IsRecording *****************************************
 
+// ********** Begin Class UGazeRecorder Function IsUsingEyeTracking ********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UGazeRecorder_IsUsingEyeTracking_Statics
+struct UHT_STATICS
+{
+	struct GazeRecorder_eventIsUsingEyeTracking_Parms
+	{
+		bool ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "Gaze" },
+		{ "Comment", "/** Whether eye gaze is being used right now, as opposed to falling back to the head ray. */" },
+		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
+		{ "ToolTip", "Whether eye gaze is being used right now, as opposed to falling back to the head ray." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function IsUsingEyeTracking constinit property declarations ********************
+	static void NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((GazeRecorder_eventIsUsingEyeTracking_Parms*)Obj)->ReturnValue = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function IsUsingEyeTracking constinit property declarations **********************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function IsUsingEyeTracking Property Definitions *******************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(GazeRecorder_eventIsUsingEyeTracking_Parms), &UHT_STATICS::NewProp_ReturnValue_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function IsUsingEyeTracking Property Definitions *********************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UGazeRecorder, nullptr, "IsUsingEyeTracking", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::GazeRecorder_eventIsUsingEyeTracking_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::GazeRecorder_eventIsUsingEyeTracking_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UGazeRecorder_IsUsingEyeTracking(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UGazeRecorder::execIsUsingEyeTracking)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(bool*)Z_Param__Result=P_THIS->IsUsingEyeTracking();
+	P_NATIVE_END;
+}
+// ********** End Class UGazeRecorder Function IsUsingEyeTracking **********************************
+
 // ********** Begin Class UGazeRecorder ************************************************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -185,6 +244,22 @@ struct UHT_STATICS
 		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
 		{ "ToolTip", "Collision channel the gaze ray tests against. Visibility is right for scenery." },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bPreferEyeTracking_MetaData[] = {
+		{ "Category", "Gaze" },
+		{ "Comment", "/**\n\x09 * Use the eye tracker's gaze ray when the headset has one, and the head ray when it does not.\n\x09 *\n\x09 * Safe to leave on before any eye-tracking hardware arrives: with no tracker connected this\n\x09 * changes nothing at all, and every row still records `head`. The moment a headset that\n\x09 * supports it is plugged in, rows start recording `eye` instead, with no rebuild and no\n\x09 * change to the file format.\n\x09 *\n\x09 * Why it matters to the analysis: a head ray is not where somebody is looking. People turn\n\x09 * their eyes first and their head only partway, so the head ray marks a region of attention\n\x09 * roughly seven degrees wide, which across a street is more than a metre. Eye gaze is nearer\n\x09 * one degree. The heat map widens or tightens to match, per row, from the `Source` column --\n\x09 * so a recording that switches mid-session is still read correctly.\n\x09 *\n\x09 * Turn it off to force head gaze, for instance to keep one test day consistent with an\n\x09 * earlier one recorded before the hardware arrived.\n\x09 */" },
+		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
+		{ "ToolTip", "Use the eye tracker's gaze ray when the headset has one, and the head ray when it does not.\n\nSafe to leave on before any eye-tracking hardware arrives: with no tracker connected this\nchanges nothing at all, and every row still records `head`. The moment a headset that\nsupports it is plugged in, rows start recording `eye` instead, with no rebuild and no\nchange to the file format.\n\nWhy it matters to the analysis: a head ray is not where somebody is looking. People turn\ntheir eyes first and their head only partway, so the head ray marks a region of attention\nroughly seven degrees wide, which across a street is more than a metre. Eye gaze is nearer\none degree. The heat map widens or tightens to match, per row, from the `Source` column --\nso a recording that switches mid-session is still read correctly.\n\nTurn it off to force head gaze, for instance to keep one test day consistent with an\nearlier one recorded before the hardware arrived." },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_MinEyeConfidence_MetaData[] = {
+		{ "Category", "Gaze" },
+		{ "ClampMax", "1.0" },
+		{ "ClampMin", "0.0" },
+		{ "Comment", "/**\n\x09 * Below this confidence the eye tracker's answer is not used and the row falls back to the\n\x09 * head ray, recording `head`.\n\x09 *\n\x09 * Confidence collapses during a blink and while the tracker is losing the eye behind\n\x09 * spectacles. Those rows are not dropped -- a blink is not a look away, and losing them\n\x09 * would leave holes in the dwell -- they simply revert to the less precise ray, which is\n\x09 * still true about where the participant was facing.\n\x09 */" },
+		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
+		{ "ToolTip", "Below this confidence the eye tracker's answer is not used and the row falls back to the\nhead ray, recording `head`.\n\nConfidence collapses during a blink and while the tracker is losing the eye behind\nspectacles. Those rows are not dropped -- a blink is not a look away, and losing them\nwould leave holes in the dwell -- they simply revert to the less precise ray, which is\nstill true about where the participant was facing." },
+		{ "UIMax", "1.0" },
+		{ "UIMin", "0.0" },
+	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bUseActorTagAsHitObject_MetaData[] = {
 		{ "Category", "Gaze" },
 		{ "Comment", "/**\n\x09 * Prefer an actor's first Tag over its object name for `HitObject`.\n\x09 *\n\x09 * This is the difference between an analysis column full of `StaticMeshActor_12`\n\x09 * and one full of `Green facade`. Tag the things you actually want measured\n\x09 * (\"Trees\", \"Bike lane\", \"Facade\"); untagged actors still record under their\n\x09 * object name.\n\x09 */" },
@@ -212,6 +287,12 @@ struct UHT_STATICS
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_SampleRateHz;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_MaxTraceDistance;
 	static const UECodeGen_Private::FBytePropertyParams NewProp_TraceChannel;
+	static void NewProp_bPreferEyeTracking_SetBit(void* Obj)
+	{
+		((UGazeRecorder*)Obj)->bPreferEyeTracking = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_bPreferEyeTracking;
+	static const UECodeGen_Private::FFloatPropertyParams NewProp_MinEyeConfidence;
 	static void NewProp_bUseActorTagAsHitObject_SetBit(void* Obj)
 	{
 		((UGazeRecorder*)Obj)->bUseActorTagAsHitObject = 1;
@@ -224,11 +305,13 @@ struct UHT_STATICS
 	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
 		{ .NameUTF8 = UTF8TEXT("GetGazeFilePath"), .Pointer = &UGazeRecorder::execGetGazeFilePath },
 		{ .NameUTF8 = UTF8TEXT("IsRecording"), .Pointer = &UGazeRecorder::execIsRecording },
+		{ .NameUTF8 = UTF8TEXT("IsUsingEyeTracking"), .Pointer = &UGazeRecorder::execIsUsingEyeTracking },
 	};
 	static FTypeConstructFunc* DependentSingletons[];
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
 		{ &Z_Construct_UFunction_UGazeRecorder_GetGazeFilePath, "GetGazeFilePath" }, // 8825628b80f5cc0ad8906712e1b024bd0079f870
 		{ &Z_Construct_UFunction_UGazeRecorder_IsRecording, "IsRecording" }, // 83d402e4d771a5647be5aa93051fd3671677f0a0
+		{ &Z_Construct_UFunction_UGazeRecorder_IsUsingEyeTracking, "IsUsingEyeTracking" }, // 3a58315bc89c56640c52023ca2cacad4f6ff2bfd
 	};
 	static_assert(UE_ARRAY_COUNT(FuncInfo) < 2048);
 	static constexpr FCppClassTypeInfoStatic StaticCppClassTypeInfo = {
@@ -242,6 +325,8 @@ const UECodeGen_Private::FObjectPropertyParams UHT_STATICS::NewProp_VrLink = { "
 const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_SampleRateHz = { "SampleRateHz", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, SampleRateHz), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_SampleRateHz_MetaData), NewProp_SampleRateHz_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_MaxTraceDistance = { "MaxTraceDistance", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, MaxTraceDistance), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_MaxTraceDistance_MetaData), NewProp_MaxTraceDistance_MetaData) };
 const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_TraceChannel = { "TraceChannel", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, TraceChannel), Z_Construct_UEnum_Engine_ECollisionChannel, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_TraceChannel_MetaData), NewProp_TraceChannel_MetaData) }; // 3aff698625c18cc2ccaa87a587b2eac8c50cdec7
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bPreferEyeTracking = { "bPreferEyeTracking", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(UGazeRecorder), &UHT_STATICS::NewProp_bPreferEyeTracking_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bPreferEyeTracking_MetaData), NewProp_bPreferEyeTracking_MetaData) };
+const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_MinEyeConfidence = { "MinEyeConfidence", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, MinEyeConfidence), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_MinEyeConfidence_MetaData), NewProp_MinEyeConfidence_MetaData) };
 const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bUseActorTagAsHitObject = { "bUseActorTagAsHitObject", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(UGazeRecorder), &UHT_STATICS::NewProp_bUseActorTagAsHitObject_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bUseActorTagAsHitObject_MetaData), NewProp_bUseActorTagAsHitObject_MetaData) };
 const UECodeGen_Private::FStrPropertyParams UHT_STATICS::NewProp_OutputRootOverride = { "OutputRootOverride", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Str, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, OutputRootOverride), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OutputRootOverride_MetaData), NewProp_OutputRootOverride_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_FlushIntervalSeconds = { "FlushIntervalSeconds", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, FlushIntervalSeconds), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_FlushIntervalSeconds_MetaData), NewProp_FlushIntervalSeconds_MetaData) };
@@ -250,6 +335,8 @@ const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] 
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_SampleRateHz,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_MaxTraceDistance,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_TraceChannel,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bPreferEyeTracking,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_MinEyeConfidence,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bUseActorTagAsHitObject,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OutputRootOverride,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_FlushIntervalSeconds,
@@ -323,14 +410,14 @@ UGazeRecorder::~UGazeRecorder() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UGazeRecorder, TEXT("UGazeRecorder"), &Z_Registration_Info_UClass_UGazeRecorder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UGazeRecorder), 924855839U) },
+		{ Z_Construct_UClass_UGazeRecorder, TEXT("UGazeRecorder"), &Z_Registration_Info_UClass_UGazeRecorder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UGazeRecorder), 1123429576U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_fbd530c352b014743a1ec042285488bc49c88c7c{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_3fdfd2f5e4eb069e65d707eb5764684f0b1a210e{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

@@ -1365,74 +1365,6 @@ DEFINE_FUNCTION(UVrLinkComponent::execOnStartTriggerOverlap)
 }
 // ********** End Class UVrLinkComponent Function OnStartTriggerOverlap ****************************
 
-// ********** Begin Class UVrLinkComponent Function SendBaseline ***********************************
-#ifdef UHT_STATICS
-#error UHT_STATICS already defined
-#endif
-#define UHT_STATICS Z_Construct_UFunction_UVrLinkComponent_SendBaseline_Statics
-struct UHT_STATICS
-{
-	struct VrLinkComponent_eventSendBaseline_Parms
-	{
-		FString Phase;
-		bool bStart;
-	};
-#if WITH_METADATA
-	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
-		{ "Category", "VrLink" },
-		{ "Comment", "/** Sends a `baseline.start` (bStart=true) or `baseline.end` event for the given phase. */" },
-		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
-		{ "ToolTip", "Sends a `baseline.start` (bStart=true) or `baseline.end` event for the given phase." },
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Phase_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif // WITH_METADATA
-
-// ********** Begin Function SendBaseline constinit property declarations **************************
-	static const UECodeGen_Private::FStrPropertyParams NewProp_Phase;
-	static void NewProp_bStart_SetBit(void* Obj)
-	{
-		((VrLinkComponent_eventSendBaseline_Parms*)Obj)->bStart = 1;
-	}
-	static const UECodeGen_Private::FBoolPropertyParams NewProp_bStart;
-	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
-// ********** End Function SendBaseline constinit property declarations ****************************
-	static const UECodeGen_Private::FFunctionParams FuncParams;
-};
-
-// ********** Begin Function SendBaseline Property Definitions *************************************
-const UECodeGen_Private::FStrPropertyParams UHT_STATICS::NewProp_Phase = { "Phase", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Str, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkComponent_eventSendBaseline_Parms, Phase), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Phase_MetaData), NewProp_Phase_MetaData) };
-const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bStart = { "bStart", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkComponent_eventSendBaseline_Parms), &UHT_STATICS::NewProp_bStart_SetBit, METADATA_PARAMS(0, nullptr) };
-const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
-	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase,
-	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bStart,
-};
-static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
-// ********** End Function SendBaseline Property Definitions ***************************************
-const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkComponent, nullptr, "SendBaseline", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkComponent_eventSendBaseline_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
-static_assert(sizeof(UHT_STATICS::VrLinkComponent_eventSendBaseline_Parms) < MAX_uint16);
-UFunction* Z_Construct_UFunction_UVrLinkComponent_SendBaseline(ETypeConstructPhase Phase)
-{
-	static UFunction* ReturnFunction = nullptr;
-	if (!ReturnFunction)
-	{
-		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
-	}
-	return ReturnFunction;
-}
-#undef UHT_STATICS
-DEFINE_FUNCTION(UVrLinkComponent::execSendBaseline)
-{
-	P_GET_PROPERTY(FStrProperty,Z_Param_Phase);
-	P_GET_UBOOL(Z_Param_bStart);
-	P_FINISH;
-	P_NATIVE_BEGIN;
-	P_THIS->SendBaseline(Z_Param_Phase,Z_Param_bStart);
-	P_NATIVE_END;
-}
-// ********** End Class UVrLinkComponent Function SendBaseline *************************************
-
 // ********** Begin Class UVrLinkComponent Function SendError **************************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -1749,11 +1681,9 @@ struct UHT_STATICS
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "BlueprintSpawnableComponent", "" },
 		{ "ClassGroupNames", "Custom" },
-		{ "Comment", "/**\n * Runs the experience and speaks the vrlink v1.1 protocol to the Unity recorder.\n *\n * This is the only component you need. Put it on one actor in the level, fill in\n * the Steps table, and bind OnStepStarted / OnStepEnded to drive the visuals.\n *\n * Setup:\n *  1. Add this component to an actor in the level.\n *  2. Fill in Steps, one entry per phase the participant goes through.\n *  3. Pick an AdvanceMode: Duration, TriggerVolume, or Manual.\n *  4. Bind OnStepStarted and OnStepEnded in Blueprint.\n *\n * The Steps table is the single source of truth. The `welcome` handshake derives\n * its scene list from the distinct Locations and its variable list from the\n * distinct Scenarios, so what the tablet is told and what the events record are\n * always the same names.\n *\n * All three advance modes run the same Steps and emit the same events; only the\n * caller of GoToNextStep differs, so a run stepped through manually records\n * identically to one driven by trigger volumes.\n *\n * Transport is ATCPSocket / NetworkManager. Unity owns the event log and the\n * session clock: it receives the scene/variable/baseline events over vrlink and\n * records them. The one file this side writes is `{SessionId}_gaze.csv`, and only\n * if a UGazeRecorder is in the level; this component just publishes the session\n * state that recorder needs.\n */" },
 		{ "DisplayName", "VR Link" },
 		{ "IncludePath", "VrLinkComponent.h" },
 		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
-		{ "ToolTip", "Runs the experience and speaks the vrlink v1.1 protocol to the Unity recorder.\n\nThis is the only component you need. Put it on one actor in the level, fill in\nthe Steps table, and bind OnStepStarted / OnStepEnded to drive the visuals.\n\nSetup:\n 1. Add this component to an actor in the level.\n 2. Fill in Steps, one entry per phase the participant goes through.\n 3. Pick an AdvanceMode: Duration, TriggerVolume, or Manual.\n 4. Bind OnStepStarted and OnStepEnded in Blueprint.\n\nThe Steps table is the single source of truth. The `welcome` handshake derives\nits scene list from the distinct Locations and its variable list from the\ndistinct Scenarios, so what the tablet is told and what the events record are\nalways the same names.\n\nAll three advance modes run the same Steps and emit the same events; only the\ncaller of GoToNextStep differs, so a run stepped through manually records\nidentically to one driven by trigger volumes.\n\nTransport is ATCPSocket / NetworkManager. Unity owns the event log and the\nsession clock: it receives the scene/variable/baseline events over vrlink and\nrecords them. The one file this side writes is `{SessionId}_gaze.csv`, and only\nif a UGazeRecorder is in the level; this component just publishes the session\nstate that recorder needs." },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Steps_MetaData[] = {
 		{ "Category", "Experience" },
@@ -1857,7 +1787,6 @@ struct UHT_STATICS
 		{ .NameUTF8 = UTF8TEXT("IsRunning"), .Pointer = &UVrLinkComponent::execIsRunning },
 		{ .NameUTF8 = UTF8TEXT("IsSessionActive"), .Pointer = &UVrLinkComponent::execIsSessionActive },
 		{ .NameUTF8 = UTF8TEXT("OnStartTriggerOverlap"), .Pointer = &UVrLinkComponent::execOnStartTriggerOverlap },
-		{ .NameUTF8 = UTF8TEXT("SendBaseline"), .Pointer = &UVrLinkComponent::execSendBaseline },
 		{ .NameUTF8 = UTF8TEXT("SendError"), .Pointer = &UVrLinkComponent::execSendError },
 		{ .NameUTF8 = UTF8TEXT("SendMark"), .Pointer = &UVrLinkComponent::execSendMark },
 		{ .NameUTF8 = UTF8TEXT("SendState"), .Pointer = &UVrLinkComponent::execSendState },
@@ -1878,7 +1807,6 @@ struct UHT_STATICS
 		{ &Z_Construct_UFunction_UVrLinkComponent_IsRunning, "IsRunning" }, // 6eeeb9a91d0077d942449e9bd2963fc721ffe754
 		{ &Z_Construct_UFunction_UVrLinkComponent_IsSessionActive, "IsSessionActive" }, // 6d56e894ed2a205ea601dcc1854c7aa032c2665f
 		{ &Z_Construct_UFunction_UVrLinkComponent_OnStartTriggerOverlap, "OnStartTriggerOverlap" }, // 289a9b6914a4264c1f0920595e774a0c65938cb7
-		{ &Z_Construct_UFunction_UVrLinkComponent_SendBaseline, "SendBaseline" }, // efb9ebdc47673966399a3a3ec5d33e2b1fd60979
 		{ &Z_Construct_UFunction_UVrLinkComponent_SendError, "SendError" }, // 42fa9b6eebd3587033151fe2ed0749f86b72e42e
 		{ &Z_Construct_UFunction_UVrLinkComponent_SendMark, "SendMark" }, // d0d604de41a06c5248bae186d87850a3ea58cbb4
 		{ &Z_Construct_UFunction_UVrLinkComponent_SendState, "SendState" }, // 151db3ac037b4c80239767fd0ceb5a2473926986
@@ -1993,7 +1921,7 @@ UVrLinkComponent::~UVrLinkComponent() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
@@ -2007,10 +1935,10 @@ struct UHT_STATICS
 		{ Z_Construct_UScriptStruct_FVrLinkStudyConfig, Z_Construct_UScriptStruct_FVrLinkStudyConfig_Statics::NewStructOps, TEXT("VrLinkStudyConfig"),&Z_Registration_Info_UScriptStruct_FVrLinkStudyConfig, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FVrLinkStudyConfig), 2557101169U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 2524897179U) },
+		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 2342431322U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_eb28090028e0ea41405ee1adc827b25f0641d374{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_b6b6814c1b25b37a67da3479e6d60c309b956aeb{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	UHT_STATICS::ScriptStructInfo, UE_ARRAY_COUNT(UHT_STATICS::ScriptStructInfo),

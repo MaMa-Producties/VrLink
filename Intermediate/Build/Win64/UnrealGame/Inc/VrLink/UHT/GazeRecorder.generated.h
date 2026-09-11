@@ -18,15 +18,16 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 // ********** Begin Class UGazeRecorder ************************************************************
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execIsRecording); \
-	DECLARE_FUNCTION(execGetGazeFilePath);
+	DECLARE_FUNCTION(execGetGazeFilePath); \
+	DECLARE_FUNCTION(execIsUsingEyeTracking);
 
 
 struct Z_Construct_UClass_UGazeRecorder_Statics;
 VRLINK_API UClass* Z_Construct_UClass_UGazeRecorder(ETypeConstructPhase);
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_INCLASS_NO_PURE_DECLS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_INCLASS_NO_PURE_DECLS \
 private: \
 	friend struct ::Z_Construct_UClass_UGazeRecorder_Statics; \
 	friend VRLINK_API UClass* ::Z_Construct_UClass_UGazeRecorder(ETypeConstructPhase); \
@@ -35,7 +36,7 @@ public: \
 	DECLARE_SERIALIZER(UGazeRecorder)
 
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_ENHANCED_CONSTRUCTORS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	UGazeRecorder(UGazeRecorder&&) = delete; \
 	UGazeRecorder(const UGazeRecorder&) = delete; \
@@ -45,13 +46,13 @@ public: \
 	NO_API virtual ~UGazeRecorder();
 
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_37_PROLOG
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_GENERATED_BODY \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_37_PROLOG
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_INCLASS_NO_PURE_DECLS \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_ENHANCED_CONSTRUCTORS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_INCLASS_NO_PURE_DECLS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h_40_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -61,6 +62,6 @@ class UGazeRecorder;
 // ********** End Class UGazeRecorder **************************************************************
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h
+#define CURRENT_FILE_ID FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

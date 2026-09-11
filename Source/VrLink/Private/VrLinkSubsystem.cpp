@@ -216,6 +216,10 @@ void UVrLinkSubsystem::BuildLink(UWorld* World)
 void UVrLinkSubsystem::StartSession()
 {
 	LastLocation.Reset();
+	// A new participant's pedals are not the last participant's. Without this the
+	// opening Set Pedalling of the next session is collapsed against the previous
+	// one and never sent.
+	LastPedalling.Reset();
 	if (UVrLinkComponent* Link = RequireLink(TEXT("StartSession")))
 	{
 		Link->StartSession();
@@ -275,6 +279,25 @@ void UVrLinkSubsystem::EndScenario()
 		// hit whatever the head is pointing at, and without this they are counted as
 		// somebody looking at the design that just ended.
 		Link->SendMark(TEXT("fade"));
+	}
+}
+
+void UVrLinkSubsystem::SetPedalling(bool bTurning)
+{
+	// The sensor is read every tick, so the same value arrives hundreds of times
+	// between the two moments anyone cares about. Unset until the first call, so an
+	// opening `pedal:stop` on an already-still bike is sent rather than collapsed:
+	// a recording that never reported and a participant who never moved look the
+	// same in the file otherwise, and they are not the same fact.
+	if (LastPedalling.IsSet() && LastPedalling.GetValue() == bTurning)
+	{
+		return;
+	}
+
+	if (UVrLinkComponent* Link = RequireLink(TEXT("SetPedalling")))
+	{
+		LastPedalling = bTurning;
+		Link->SendMark(bTurning ? TEXT("pedal:start") : TEXT("pedal:stop"));
 	}
 }
 

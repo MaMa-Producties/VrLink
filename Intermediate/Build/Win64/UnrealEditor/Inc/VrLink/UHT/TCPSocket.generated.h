@@ -18,7 +18,7 @@
 PRAGMA_DISABLE_DEPRECATION_WARNINGS
 
 // ********** Begin Class ATCPSocket ***************************************************************
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execIsSocketConnected); \
 	DECLARE_FUNCTION(execReceiveMessage); \
 	DECLARE_FUNCTION(execSendMessage); \
@@ -29,7 +29,7 @@ PRAGMA_DISABLE_DEPRECATION_WARNINGS
 struct Z_Construct_UClass_ATCPSocket_Statics;
 VRLINK_API UClass* Z_Construct_UClass_ATCPSocket(ETypeConstructPhase);
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_INCLASS_NO_PURE_DECLS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_INCLASS_NO_PURE_DECLS \
 private: \
 	friend struct ::Z_Construct_UClass_ATCPSocket_Statics; \
 	friend VRLINK_API UClass* ::Z_Construct_UClass_ATCPSocket(ETypeConstructPhase); \
@@ -38,7 +38,7 @@ public: \
 	DECLARE_SERIALIZER(ATCPSocket)
 
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_ENHANCED_CONSTRUCTORS \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	ATCPSocket(ATCPSocket&&) = delete; \
 	ATCPSocket(const ATCPSocket&) = delete; \
@@ -48,13 +48,13 @@ public: \
 	NO_API virtual ~ATCPSocket();
 
 
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_10_PROLOG
-#define FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_GENERATED_BODY \
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_10_PROLOG
+#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_INCLASS_NO_PURE_DECLS \
-	FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_ENHANCED_CONSTRUCTORS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_INCLASS_NO_PURE_DECLS \
+	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h_13_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -64,6 +64,6 @@ class ATCPSocket;
 // ********** End Class ATCPSocket *****************************************************************
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h
+#define CURRENT_FILE_ID FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_TCPSocket_h
 
 PRAGMA_ENABLE_DEPRECATION_WARNINGS

@@ -83,6 +83,7 @@ own question.
 
 ```
 Start Session
+Set Pedalling   (whatever the pedals are doing right now)
 Start Baseline  (Relaxed)    ...   End Baseline (Relaxed)
 Start Baseline  (Stressed)   ...   End Baseline (Stressed)
 
@@ -106,6 +107,35 @@ the design that just ended.
 This matters for gaze as much as for the EEG. Between two designs the head is
 still pointing at something, and those rays would otherwise be counted as
 somebody looking at the design that has already gone.
+
+### The pedals
+
+Wire the bike sensor's "are the pedals turning" boolean straight into **Set
+Pedalling**. Call it every tick if that is easiest: the plugin drops repeats, so
+only the two moments anyone cares about reach the file.
+
+It arrives as two marks, `pedal:start` and `pedal:stop`, which together give
+every stretch of movement. Not a cadence number: a value ten times a second is
+five thousand rows in a session, and this project has been here before. The
+headband's blink flag was written as rows until somebody counted them, 813 in
+140 seconds, and found nothing could use them.
+
+**Call it once right after `Start Session` as well, whatever the pedals are
+doing.** Even standing still, so that an opening `pedal:stop` is recorded.
+
+That last rule is the one worth understanding, because skipping it costs the
+whole session rather than part of it. A file with no pedal marks could be a
+build that never reported, or a participant who never moved. Those are
+different facts, the file cannot tell them apart, and the analysis refuses to
+guess: it reports "unknown" for the entire ride rather than assuming stillness.
+One opening call is what makes the session readable.
+
+**What it is for.** The calibration is the one stretch that is supposed to be
+the participant at rest, and it is what every later value is measured against.
+Until these marks existed nothing in the recording could say whether they were
+sitting still or already riding, and a calibration recorded while pedalling is
+not a rest baseline. The analysis now refuses one that is more than a tenth
+spent pedalling. A few seconds of finding the pedals is fine and expected.
 
 ### One session per ride, not per trigger
 

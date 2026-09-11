@@ -18,10 +18,183 @@ ENGINE_API UClass* Z_Construct_UClass_UGameInstanceSubsystem(ETypeConstructPhase
 
 // ********** Begin Same Module References *********************************************************
 UPackage* Z_Construct_UPackage__Script_VrLink(ETypeConstructPhase);
+VRLINK_API UEnum* Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase(ETypeConstructPhase);
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase);
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase);
 // ********** End Same Module References ***********************************************************
 #define UHT_STRUCT_BASE(INIT) UE::CodeGen::ConstInit::TCompiledInObjectPtr<const FStructBaseChain>(UE::Private::AsStructBaseChain(INIT))
+
+// ********** Begin Enum EVrLinkCalibrationPhase ***************************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase_Statics
+template<> VRLINK_NON_ATTRIBUTED_API UEnum* StaticEnum<EVrLinkCalibrationPhase>()
+{
+	return Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase(ETypeConstructPhase::Outer);
+}
+struct UHT_STATICS
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Baseline.Comment", "/** One undivided calibration stretch, when the experience does not split it. */" },
+		{ "Baseline.DisplayName", "Baseline" },
+		{ "Baseline.Name", "EVrLinkCalibrationPhase::Baseline" },
+		{ "Baseline.ToolTip", "One undivided calibration stretch, when the experience does not split it." },
+		{ "BlueprintType", "true" },
+		{ "Comment", "/**\n * The calibration poles, as a closed set.\n *\n * A free string here was a real hazard: the recorder keys its calibration window\n * on the exact phase name, so a spelling it does not know (\"calm\", \"negative\")\n * lands outside its predicate and the window closes early -- producing a baseline\n * range that is quietly half of what it claims, with no error and no gap in the\n * file. An enum makes that unspellable from Blueprint.\n */" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "Relaxed.Comment", "/** The lower pole: the participant at rest. */" },
+		{ "Relaxed.DisplayName", "Relaxed (lower pole)" },
+		{ "Relaxed.Name", "EVrLinkCalibrationPhase::Relaxed" },
+		{ "Relaxed.ToolTip", "The lower pole: the participant at rest." },
+		{ "Stressed.Comment", "/** The upper pole: the participant deliberately unsettled. */" },
+		{ "Stressed.DisplayName", "Stressed (upper pole)" },
+		{ "Stressed.Name", "EVrLinkCalibrationPhase::Stressed" },
+		{ "Stressed.ToolTip", "The upper pole: the participant deliberately unsettled." },
+		{ "ToolTip", "The calibration poles, as a closed set.\n\nA free string here was a real hazard: the recorder keys its calibration window\non the exact phase name, so a spelling it does not know (\"calm\", \"negative\")\nlands outside its predicate and the window closes early -- producing a baseline\nrange that is quietly half of what it claims, with no error and no gap in the\nfile. An enum makes that unspellable from Blueprint." },
+	};
+#endif // WITH_METADATA
+	static constexpr UECodeGen_Private::FEnumeratorParam Enumerators[] = {
+		{ "EVrLinkCalibrationPhase::Baseline", (int64)EVrLinkCalibrationPhase::Baseline },
+		{ "EVrLinkCalibrationPhase::Relaxed", (int64)EVrLinkCalibrationPhase::Relaxed },
+		{ "EVrLinkCalibrationPhase::Stressed", (int64)EVrLinkCalibrationPhase::Stressed },
+	};
+	static const UECodeGen_Private::FEnumParams EnumParams;
+}; // struct UHT_STATICS 
+const UECodeGen_Private::FEnumParams UHT_STATICS::EnumParams = {
+	(FTypeConstructFunc*)Z_Construct_UPackage__Script_VrLink,
+	nullptr,
+	"EVrLinkCalibrationPhase",
+	"EVrLinkCalibrationPhase",
+	UHT_STATICS::Enumerators,
+	RF_Public|RF_Transient|RF_MarkAsNative,
+	UE_ARRAY_COUNT(UHT_STATICS::Enumerators),
+	EEnumFlags::None,
+	(uint8)UEnum::ECppForm::EnumClass,
+	(uint8)UEnum::EUnderlyingType::uint8,
+	METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)
+};
+static FEnumRegistrationInfo ZRIE_EVrLinkCalibrationPhase;
+UEnum* Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase(ETypeConstructPhase Phase)
+{
+	if (Phase == ETypeConstructPhase::Outer)
+	{
+		if (!ZRIE_EVrLinkCalibrationPhase.OuterSingleton)
+		{
+			ZRIE_EVrLinkCalibrationPhase.OuterSingleton = GetStaticEnum(Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, (UObject*)Z_Construct_UPackage__Script_VrLink(ETypeConstructPhase::Outer), TEXT("EVrLinkCalibrationPhase"));
+		}
+		return ZRIE_EVrLinkCalibrationPhase.OuterSingleton;
+	}
+	if (!ZRIE_EVrLinkCalibrationPhase.InnerSingleton)
+	{
+		UECodeGen_Private::ConstructUEnum(ZRIE_EVrLinkCalibrationPhase.InnerSingleton, UHT_STATICS::EnumParams);
+	}
+	return ZRIE_EVrLinkCalibrationPhase.InnerSingleton;
+}
+#undef UHT_STATICS
+// ********** End Enum EVrLinkCalibrationPhase *****************************************************
+
+// ********** Begin Class UVrLinkSubsystem Function EndBaseline ************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_EndBaseline_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventEndBaseline_Parms
+	{
+		EVrLinkCalibrationPhase Phase;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Calibration" },
+		{ "Comment", "/**\n\x09 * Closes the calibration phase opened by Start Baseline. Pass the SAME phase.\n\x09 *\n\x09 * A phase left open runs to the end of the session, so the calibration swallows the\n\x09 * ride and there is nothing left to compare it against.\n\x09 */" },
+		{ "DisplayName", "End Baseline" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Closes the calibration phase opened by Start Baseline. Pass the SAME phase.\n\nA phase left open runs to the end of the session, so the calibration swallows the\nride and there is nothing left to compare it against." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function EndBaseline constinit property declarations ***************************
+	static const UECodeGen_Private::FBytePropertyParams NewProp_Phase_Underlying;
+	static const UECodeGen_Private::FEnumPropertyParams NewProp_Phase;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function EndBaseline constinit property declarations *****************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function EndBaseline Property Definitions **************************************
+const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_Phase_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, 0, nullptr, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FEnumPropertyParams UHT_STATICS::NewProp_Phase = { "Phase", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Enum, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkSubsystem_eventEndBaseline_Parms, Phase), Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, METADATA_PARAMS(0, nullptr) }; // 2f494e01b803020224bd3600d867cc2297169dfd
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase_Underlying,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function EndBaseline Property Definitions ****************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "EndBaseline", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventEndBaseline_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventEndBaseline_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_EndBaseline(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execEndBaseline)
+{
+	P_GET_ENUM(EVrLinkCalibrationPhase,Z_Param_Phase);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->EndBaseline(EVrLinkCalibrationPhase(Z_Param_Phase));
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function EndBaseline **************************************
+
+// ********** Begin Class UVrLinkSubsystem Function EndScenario ************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_EndScenario_Statics
+struct UHT_STATICS
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link" },
+		{ "Comment", "/**\n\x09 * Ends the scenario now showing. Call it every time a design stops being shown,\n\x09 * whether another follows it or the ride is over.\n\x09 *\n\x09 * Everything from here until the next Start Scenario or Set Location is thrown\n\x09 * away by analysis. That stretch is the participant between designs: a transition,\n\x09 * a corridor, a fade to black. It has no point of interest in it, and counted as\n\x09 * data it would be credited to the design that just ended.\n\x09 */" },
+		{ "DisplayName", "End Scenario" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Ends the scenario now showing. Call it every time a design stops being shown,\nwhether another follows it or the ride is over.\n\nEverything from here until the next Start Scenario or Set Location is thrown\naway by analysis. That stretch is the participant between designs: a transition,\na corridor, a fade to black. It has no point of interest in it, and counted as\ndata it would be credited to the design that just ended." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function EndScenario constinit property declarations ***************************
+// ********** End Function EndScenario constinit property declarations *****************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "EndScenario", nullptr, 0, 0, RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_EndScenario(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execEndScenario)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->EndScenario();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function EndScenario **************************************
 
 // ********** Begin Class UVrLinkSubsystem Function EndSession *************************************
 #ifdef UHT_STATICS
@@ -153,10 +326,10 @@ struct UHT_STATICS
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "Category", "VR Link" },
-		{ "Comment", "/**\n\x09 * Makes the link exist and listen for the tablet. Safe to call more than\n\x09 * once. `ProjectName` is the study/project shown on the tablet (e.g.\n\x09 * \"Spaklerweg\"); `Posture` is the participant's body position, an EEG-noise\n\x09 * covariate (\"Cycling\" for the bike).\n\x09 */" },
+		{ "Comment", "/**\n\x09 * Makes the link exist and listen for the tablet. Safe to call more than\n\x09 * once. `ProjectName` is the study/project shown on the tablet (e.g.\n\x09 * \"Spaklerweg\"); `Posture` is the participant's body position, an EEG-noise\n\x09 * covariate (\"Cycling\" for the bike).\n\x09 *\n\x09 * Call it once, from the Game Instance. It is remembered, and the link is\n\x09 * rebuilt by itself in every level the participant is taken to -- the\n\x09 * subsystem outlives a level change but the actors in a level do not, so\n\x09 * without that the first Open Level would silently leave nothing to talk\n\x09 * to. The session keeps running across the change; only the actors are new.\n\x09 */" },
 		{ "CPP_Default_Posture", "Cycling" },
 		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
-		{ "ToolTip", "Makes the link exist and listen for the tablet. Safe to call more than\nonce. `ProjectName` is the study/project shown on the tablet (e.g.\n\"Spaklerweg\"); `Posture` is the participant's body position, an EEG-noise\ncovariate (\"Cycling\" for the bike)." },
+		{ "ToolTip", "Makes the link exist and listen for the tablet. Safe to call more than\nonce. `ProjectName` is the study/project shown on the tablet (e.g.\n\"Spaklerweg\"); `Posture` is the participant's body position, an EEG-noise\ncovariate (\"Cycling\" for the bike).\n\nCall it once, from the Game Instance. It is remembered, and the link is\nrebuilt by itself in every level the participant is taken to -- the\nsubsystem outlives a level change but the actors in a level do not, so\nwithout that the first Open Level would silently leave nothing to talk\nto. The session keeps running across the change; only the actors are new." },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_ProjectName_MetaData[] = {
 		{ "NativeConst", "" },
@@ -264,74 +437,6 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execIsSessionActive)
 	P_NATIVE_END;
 }
 // ********** End Class UVrLinkSubsystem Function IsSessionActive **********************************
-
-// ********** Begin Class UVrLinkSubsystem Function SendBaselinePhase ******************************
-#ifdef UHT_STATICS
-#error UHT_STATICS already defined
-#endif
-#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_SendBaselinePhase_Statics
-struct UHT_STATICS
-{
-	struct VrLinkSubsystem_eventSendBaselinePhase_Parms
-	{
-		FString Phase;
-		bool bStart;
-	};
-#if WITH_METADATA
-	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
-		{ "Category", "VR Link|Advanced" },
-		{ "Comment", "/**\n\x09 * Advanced, only for experiences that drive the calibration phases\n\x09 * themselves instead of letting the tablet time them: marks the start/end\n\x09 * of a baseline phase. Phase: baseline | relaxed | stressed.\n\x09 */" },
-		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
-		{ "ToolTip", "Advanced, only for experiences that drive the calibration phases\nthemselves instead of letting the tablet time them: marks the start/end\nof a baseline phase. Phase: baseline | relaxed | stressed." },
-	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Phase_MetaData[] = {
-		{ "NativeConst", "" },
-	};
-#endif // WITH_METADATA
-
-// ********** Begin Function SendBaselinePhase constinit property declarations *********************
-	static const UECodeGen_Private::FStrPropertyParams NewProp_Phase;
-	static void NewProp_bStart_SetBit(void* Obj)
-	{
-		((VrLinkSubsystem_eventSendBaselinePhase_Parms*)Obj)->bStart = 1;
-	}
-	static const UECodeGen_Private::FBoolPropertyParams NewProp_bStart;
-	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
-// ********** End Function SendBaselinePhase constinit property declarations ***********************
-	static const UECodeGen_Private::FFunctionParams FuncParams;
-};
-
-// ********** Begin Function SendBaselinePhase Property Definitions ********************************
-const UECodeGen_Private::FStrPropertyParams UHT_STATICS::NewProp_Phase = { "Phase", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Str, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkSubsystem_eventSendBaselinePhase_Parms, Phase), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Phase_MetaData), NewProp_Phase_MetaData) };
-const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bStart = { "bStart", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkSubsystem_eventSendBaselinePhase_Parms), &UHT_STATICS::NewProp_bStart_SetBit, METADATA_PARAMS(0, nullptr) };
-const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
-	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase,
-	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bStart,
-};
-static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
-// ********** End Function SendBaselinePhase Property Definitions **********************************
-const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "SendBaselinePhase", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventSendBaselinePhase_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
-static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventSendBaselinePhase_Parms) < MAX_uint16);
-UFunction* Z_Construct_UFunction_UVrLinkSubsystem_SendBaselinePhase(ETypeConstructPhase Phase)
-{
-	static UFunction* ReturnFunction = nullptr;
-	if (!ReturnFunction)
-	{
-		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
-	}
-	return ReturnFunction;
-}
-#undef UHT_STATICS
-DEFINE_FUNCTION(UVrLinkSubsystem::execSendBaselinePhase)
-{
-	P_GET_PROPERTY(FStrProperty,Z_Param_Phase);
-	P_GET_UBOOL(Z_Param_bStart);
-	P_FINISH;
-	P_NATIVE_BEGIN;
-	P_THIS->SendBaselinePhase(Z_Param_Phase,Z_Param_bStart);
-	P_NATIVE_END;
-}
-// ********** End Class UVrLinkSubsystem Function SendBaselinePhase ********************************
 
 // ********** Begin Class UVrLinkSubsystem Function SendMark ***************************************
 #ifdef UHT_STATICS
@@ -451,6 +556,67 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execSetLocation)
 }
 // ********** End Class UVrLinkSubsystem Function SetLocation **************************************
 
+// ********** Begin Class UVrLinkSubsystem Function SetPedalling ***********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventSetPedalling_Parms
+	{
+		bool bTurning;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link" },
+		{ "Comment", "/**\n\x09 * The bike's pedals started or stopped turning. Call on every change, or every\n\x09 * tick straight from the sensor: repeats of the same value are dropped here.\n\x09 *\n\x09 * Recorded as two marks, `pedal:start` and `pedal:stop`, which is the whole\n\x09 * span of movement rather than a reading of how fast. A cadence value at even\n\x09 * ten a second is five thousand rows in a session, and the recorder has been\n\x09 * here before: the headband's blink flag was written as rows until somebody\n\x09 * counted them and found nothing could use them.\n\x09 *\n\x09 * Call it once after Start Session as well, whatever the pedals are doing. The\n\x09 * analysis cannot tell a recording that never reported from a participant who\n\x09 * never moved, and it refuses to guess, so an opening call is what makes the\n\x09 * whole session readable rather than the part after the first change.\n\x09 *\n\x09 * What it is for: the calibration is the one stretch that is supposed to be\n\x09 * the participant at rest, and nothing in the file could say whether it was.\n\x09 */" },
+		{ "DisplayName", "Set Pedalling" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "The bike's pedals started or stopped turning. Call on every change, or every\ntick straight from the sensor: repeats of the same value are dropped here.\n\nRecorded as two marks, `pedal:start` and `pedal:stop`, which is the whole\nspan of movement rather than a reading of how fast. A cadence value at even\nten a second is five thousand rows in a session, and the recorder has been\nhere before: the headband's blink flag was written as rows until somebody\ncounted them and found nothing could use them.\n\nCall it once after Start Session as well, whatever the pedals are doing. The\nanalysis cannot tell a recording that never reported from a participant who\nnever moved, and it refuses to guess, so an opening call is what makes the\nwhole session readable rather than the part after the first change.\n\nWhat it is for: the calibration is the one stretch that is supposed to be\nthe participant at rest, and nothing in the file could say whether it was." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function SetPedalling constinit property declarations **************************
+	static void NewProp_bTurning_SetBit(void* Obj)
+	{
+		((VrLinkSubsystem_eventSetPedalling_Parms*)Obj)->bTurning = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_bTurning;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function SetPedalling constinit property declarations ****************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function SetPedalling Property Definitions *************************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bTurning = { "bTurning", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkSubsystem_eventSetPedalling_Parms), &UHT_STATICS::NewProp_bTurning_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bTurning,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function SetPedalling Property Definitions ***************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "SetPedalling", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventSetPedalling_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventSetPedalling_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execSetPedalling)
+{
+	P_GET_UBOOL(Z_Param_bTurning);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->SetPedalling(Z_Param_bTurning);
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function SetPedalling *************************************
+
 // ********** Begin Class UVrLinkSubsystem Function SetScenario ************************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -465,9 +631,10 @@ struct UHT_STATICS
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "Category", "VR Link" },
-		{ "Comment", "/** The design variant now on display (e.g. \"Green facade\"). Call on every change. */" },
+		{ "Comment", "/**\n\x09 * The design variant now on display (e.g. \"Green facade\"). Call on every change.\n\x09 *\n\x09 * Calling it again with another name starts that one, which is what ends this one:\n\x09 * only one design is on display at a time. EndScenario is for the other case, a\n\x09 * design stopping with nothing to replace it.\n\x09 *\n\x09 * Shown in Blueprint as Start Scenario, to pair with End Scenario. The C++ name is\n\x09 * deliberately left alone: nodes bind to that, and renaming it would turn every\n\x09 * existing call into a red error node in a graph nobody here can open.\n\x09 */" },
+		{ "DisplayName", "Start Scenario" },
 		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
-		{ "ToolTip", "The design variant now on display (e.g. \"Green facade\"). Call on every change." },
+		{ "ToolTip", "The design variant now on display (e.g. \"Green facade\"). Call on every change.\n\nCalling it again with another name starts that one, which is what ends this one:\nonly one design is on display at a time. EndScenario is for the other case, a\ndesign stopping with nothing to replace it.\n\nShown in Blueprint as Start Scenario, to pair with End Scenario. The C++ name is\ndeliberately left alone: nodes bind to that, and renaming it would turn every\nexisting call into a red error node in a graph nobody here can open." },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Name_MetaData[] = {
 		{ "NativeConst", "" },
@@ -509,6 +676,66 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execSetScenario)
 	P_NATIVE_END;
 }
 // ********** End Class UVrLinkSubsystem Function SetScenario **************************************
+
+// ********** Begin Class UVrLinkSubsystem Function StartBaseline **********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_StartBaseline_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventStartBaseline_Parms
+	{
+		EVrLinkCalibrationPhase Phase;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Calibration" },
+		{ "Comment", "/**\n\x09 * For experiences that drive the calibration themselves instead of letting the\n\x09 * tablet time it: marks the start and end of a calibration phase.\n\x09 *\n\x09 * Call it around each pole. A calibration that is a relaxed half followed by a\n\x09 * stressed half needs all four calls, and the recorder keeps them as one window\n\x09 * because both are calibration; without the second pole the range has no upper\n\x09 * end and every value measured against it is wrong in the same direction.\n\x09 */" },
+		{ "DisplayName", "Start Baseline" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "For experiences that drive the calibration themselves instead of letting the\ntablet time it: marks the start and end of a calibration phase.\n\nCall it around each pole. A calibration that is a relaxed half followed by a\nstressed half needs all four calls, and the recorder keeps them as one window\nbecause both are calibration; without the second pole the range has no upper\nend and every value measured against it is wrong in the same direction." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function StartBaseline constinit property declarations *************************
+	static const UECodeGen_Private::FBytePropertyParams NewProp_Phase_Underlying;
+	static const UECodeGen_Private::FEnumPropertyParams NewProp_Phase;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function StartBaseline constinit property declarations ***************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function StartBaseline Property Definitions ************************************
+const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_Phase_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, 0, nullptr, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FEnumPropertyParams UHT_STATICS::NewProp_Phase = { "Phase", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Enum, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkSubsystem_eventStartBaseline_Parms, Phase), Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, METADATA_PARAMS(0, nullptr) }; // 2f494e01b803020224bd3600d867cc2297169dfd
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase_Underlying,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Phase,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function StartBaseline Property Definitions **************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "StartBaseline", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventStartBaseline_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventStartBaseline_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_StartBaseline(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execStartBaseline)
+{
+	P_GET_ENUM(EVrLinkCalibrationPhase,Z_Param_Phase);
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->StartBaseline(EVrLinkCalibrationPhase(Z_Param_Phase));
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function StartBaseline ************************************
 
 // ********** Begin Class UVrLinkSubsystem Function StartSession ***********************************
 #ifdef UHT_STATICS
@@ -559,37 +786,41 @@ struct UHT_STATICS
 {
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
-		{ "Comment", "/**\n * The one-stop Blueprint interface to the Neural Recorder tablet.\n *\n * A GameInstance subsystem: it exists for the whole game's lifetime, needs no\n * setup, and every node is reachable from any Blueprint via\n * `Get VrLinkSubsystem`. There is no connection object to store: the subsystem\n * IS the connection.\n *\n * Minimal integration, four calls:\n *\n *   1. `Initialize Vr Link` once (e.g. GameInstance Init or level BeginPlay).\n *      Spawns the network link if the level does not already contain one.\n *   2. `Start Session` when the ride starts. The tablet runs the participant's\n *      baseline automatically at session start; give it ~30 s of calm before\n *      the first stimulus.\n *   3. `Set Location` / `Set Scenario` from your triggers on EVERY change.\n *      These labels are what the analysis segments by; without them a\n *      recording cannot be attributed to a design.\n *   4. `End Session` when the ride ends.\n *\n * One session per participant, not one per point of interest: the recording\n * runs continuously and your location changes segment it. Gaze recording\n * follows the session automatically.\n *\n * A level that already contains a VR Link component (the Steps-table workflow)\n * is left untouched: the subsystem finds and drives that one instead of\n * spawning its own.\n */" },
 		{ "DisplayName", "VR Link" },
 		{ "IncludePath", "VrLinkSubsystem.h" },
 		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
-		{ "ToolTip", "The one-stop Blueprint interface to the Neural Recorder tablet.\n\nA GameInstance subsystem: it exists for the whole game's lifetime, needs no\nsetup, and every node is reachable from any Blueprint via\n`Get VrLinkSubsystem`. There is no connection object to store: the subsystem\nIS the connection.\n\nMinimal integration, four calls:\n\n  1. `Initialize Vr Link` once (e.g. GameInstance Init or level BeginPlay).\n     Spawns the network link if the level does not already contain one.\n  2. `Start Session` when the ride starts. The tablet runs the participant's\n     baseline automatically at session start; give it ~30 s of calm before\n     the first stimulus.\n  3. `Set Location` / `Set Scenario` from your triggers on EVERY change.\n     These labels are what the analysis segments by; without them a\n     recording cannot be attributed to a design.\n  4. `End Session` when the ride ends.\n\nOne session per participant, not one per point of interest: the recording\nruns continuously and your location changes segment it. Gaze recording\nfollows the session automatically.\n\nA level that already contains a VR Link component (the Steps-table workflow)\nis left untouched: the subsystem finds and drives that one instead of\nspawning its own." },
 	};
 #endif // WITH_METADATA
 
 // ********** Begin Class UVrLinkSubsystem constinit property declarations *************************
 // ********** End Class UVrLinkSubsystem constinit property declarations ***************************
 	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
+		{ .NameUTF8 = UTF8TEXT("EndBaseline"), .Pointer = &UVrLinkSubsystem::execEndBaseline },
+		{ .NameUTF8 = UTF8TEXT("EndScenario"), .Pointer = &UVrLinkSubsystem::execEndScenario },
 		{ .NameUTF8 = UTF8TEXT("EndSession"), .Pointer = &UVrLinkSubsystem::execEndSession },
 		{ .NameUTF8 = UTF8TEXT("GetSessionId"), .Pointer = &UVrLinkSubsystem::execGetSessionId },
 		{ .NameUTF8 = UTF8TEXT("InitializeVrLink"), .Pointer = &UVrLinkSubsystem::execInitializeVrLink },
 		{ .NameUTF8 = UTF8TEXT("IsSessionActive"), .Pointer = &UVrLinkSubsystem::execIsSessionActive },
-		{ .NameUTF8 = UTF8TEXT("SendBaselinePhase"), .Pointer = &UVrLinkSubsystem::execSendBaselinePhase },
 		{ .NameUTF8 = UTF8TEXT("SendMark"), .Pointer = &UVrLinkSubsystem::execSendMark },
 		{ .NameUTF8 = UTF8TEXT("SetLocation"), .Pointer = &UVrLinkSubsystem::execSetLocation },
+		{ .NameUTF8 = UTF8TEXT("SetPedalling"), .Pointer = &UVrLinkSubsystem::execSetPedalling },
 		{ .NameUTF8 = UTF8TEXT("SetScenario"), .Pointer = &UVrLinkSubsystem::execSetScenario },
+		{ .NameUTF8 = UTF8TEXT("StartBaseline"), .Pointer = &UVrLinkSubsystem::execStartBaseline },
 		{ .NameUTF8 = UTF8TEXT("StartSession"), .Pointer = &UVrLinkSubsystem::execStartSession },
 	};
 	static FTypeConstructFunc* DependentSingletons[];
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndBaseline, "EndBaseline" }, // 7635acf21b7dbb3c8cd6600093fa05be7d9557ab
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndScenario, "EndScenario" }, // 8fcf4fe8a90941627b68213b80e6cdcfdf271a8b
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndSession, "EndSession" }, // 6ff681d5058c287f1aa2f6223862e4e390581a74
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_GetSessionId, "GetSessionId" }, // 59047d22e52152fdb9f4ebbd8fbf290d9159ba43
-		{ &Z_Construct_UFunction_UVrLinkSubsystem_InitializeVrLink, "InitializeVrLink" }, // 3382eb85d7451d1d25e28170fce8f286e4e3fe43
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_InitializeVrLink, "InitializeVrLink" }, // 4e2f529394a68500b8fd18e80fbc569221d1ed6a
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsSessionActive, "IsSessionActive" }, // b1605c9e97dd2f3315119f8194a49ed456a9250d
-		{ &Z_Construct_UFunction_UVrLinkSubsystem_SendBaselinePhase, "SendBaselinePhase" }, // 71a049b9025af8fec5c3fe43dcea0af1c780ba64
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SendMark, "SendMark" }, // 499a2f3fcc57b928561dfee92935d95d6c0012dd
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetLocation, "SetLocation" }, // 2754007a02b372719df09291a6d6285d27751e1f
-		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetScenario, "SetScenario" }, // 71613e5aa705046c76384c3bed183b57cb12b11c
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling, "SetPedalling" }, // 8b1ebf5b4c3ab5767496aed35e30cbb1497772fd
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetScenario, "SetScenario" }, // 0229bf2039d245dbc7009e0a83f0ccb3d07595b0
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_StartBaseline, "StartBaseline" }, // 1f575bb047f250c46b044ce0d5659bb4a6b9540c
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_StartSession, "StartSession" }, // 6b23f10d9c8e3f47329ec932c8c3131004e2a0b1
 	};
 	static_assert(UE_ARRAY_COUNT(FuncInfo) < 2048);
@@ -666,18 +897,21 @@ UVrLinkSubsystem::~UVrLinkSubsystem() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
+	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
+		{ Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, TEXT("EVrLinkCalibrationPhase"), &ZRIE_EVrLinkCalibrationPhase, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 793333249U) },
+	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 1512218334U) },
+		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 2213396022U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_Users_wlaar_Documents_GitHub_OlifantPad_VrLink_Packaged_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_db0daf55c9ad5b09c553215566253b70c9e9bf17{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_b469d22c0e58a44bf2b9fc99d3da6486d88c7c70{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,
-	nullptr, 0,
+	UHT_STATICS::EnumInfo, UE_ARRAY_COUNT(UHT_STATICS::EnumInfo),
 	nullptr, 0,
 };
 #undef UHT_STATICS

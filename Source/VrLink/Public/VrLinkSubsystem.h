@@ -127,6 +127,27 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VR Link", meta = (DisplayName = "End Scenario"))
 	void EndScenario();
 
+	/**
+	 * The bike's pedals started or stopped turning. Call on every change, or every
+	 * tick straight from the sensor: repeats of the same value are dropped here.
+	 *
+	 * Recorded as two marks, `pedal:start` and `pedal:stop`, which is the whole
+	 * span of movement rather than a reading of how fast. A cadence value at even
+	 * ten a second is five thousand rows in a session, and the recorder has been
+	 * here before: the headband's blink flag was written as rows until somebody
+	 * counted them and found nothing could use them.
+	 *
+	 * Call it once after Start Session as well, whatever the pedals are doing. The
+	 * analysis cannot tell a recording that never reported from a participant who
+	 * never moved, and it refuses to guess, so an opening call is what makes the
+	 * whole session readable rather than the part after the first change.
+	 *
+	 * What it is for: the calibration is the one stretch that is supposed to be
+	 * the participant at rest, and nothing in the file could say whether it was.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VR Link", meta = (DisplayName = "Set Pedalling"))
+	void SetPedalling(bool bTurning);
+
 	/** Flags a moment of interest on the recording timeline. */
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
 	void SendMark(const FString& Label);
@@ -232,4 +253,14 @@ private:
 
 	/** Collapses duplicate consecutive SetLocation calls client-side. */
 	FString LastLocation;
+
+	/**
+	 * The last pedal state sent, unset until the first call.
+	 *
+	 * Unset rather than false: a bike that is already still when the session opens
+	 * must still send `pedal:stop`, or the file cannot be told apart from one made
+	 * by a build that never reported at all. Those are different facts and the
+	 * analysis refuses to guess between them.
+	 */
+	TOptional<bool> LastPedalling;
 };
