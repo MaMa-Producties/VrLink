@@ -768,6 +768,13 @@ void UVrLinkComponent::SendMark(const FString& Label)
 	SendJson(Event);
 }
 
+void UVrLinkComponent::SendPedal(bool bMoving)
+{
+	const TSharedRef<FJsonObject> Event = MakeEvent(TEXT("pedal"), SessionElapsedSeconds(), NowIso());
+	Event->SetBoolField(TEXT("moving"), bMoving);
+	SendJson(Event);
+}
+
 void UVrLinkComponent::SendError(const FString& Message)
 {
 	const TSharedRef<FJsonObject> Error = MakeShared<FJsonObject>();

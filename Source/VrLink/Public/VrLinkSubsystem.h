@@ -131,7 +131,7 @@ public:
 	 * The bike's pedals started or stopped turning. Call on every change, or every
 	 * tick straight from the sensor: repeats of the same value are dropped here.
 	 *
-	 * Recorded as two marks, `pedal:start` and `pedal:stop`, which is the whole
+	 * Recorded as two edges, a start and a stop, which together give the whole
 	 * span of movement rather than a reading of how fast. A cadence value at even
 	 * ten a second is five thousand rows in a session, and the recorder has been
 	 * here before: the headband's blink flag was written as rows until somebody

@@ -128,8 +128,9 @@ happens.
 Whatever the pedals are doing, even standing still.
 
 Wire the bike sensor's boolean straight in and call it every tick if that is
-easiest. The plugin drops repeats, so only the changes reach the file as
-`pedal:start` and `pedal:stop` marks.
+easiest. The plugin drops repeats, so only the changes reach the file, as a
+start and a stop row. From those the analysis gets every stretch of movement,
+and the tablet gets a running total of seconds spent pedalling.
 
 Without an opening call there are no pedal marks at all, and a file with none
 could be a build that never reported or a participant who never moved. The

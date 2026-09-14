@@ -322,6 +322,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "VrLink")
 	void SendMark(const FString& Label);
 
+	/**
+	 * Sends a `pedal` message, which the tablet records as its own event type.
+	 *
+	 * A dedicated message rather than a mark: the tablet keeps a running total of
+	 * seconds spent pedalling and can only do that if it recognises the message,
+	 * and a mark named `pedal:start` arrives as an ordinary note it cannot read.
+	 */
+	void SendPedal(bool bMoving);
+
 	/** Sends an `error` message to surface a failure to the operator. */
 	UFUNCTION(BlueprintCallable, Category = "VrLink")
 	void SendError(const FString& Message);

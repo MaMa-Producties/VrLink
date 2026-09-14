@@ -570,10 +570,10 @@ struct UHT_STATICS
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "Category", "VR Link" },
-		{ "Comment", "/**\n\x09 * The bike's pedals started or stopped turning. Call on every change, or every\n\x09 * tick straight from the sensor: repeats of the same value are dropped here.\n\x09 *\n\x09 * Recorded as two marks, `pedal:start` and `pedal:stop`, which is the whole\n\x09 * span of movement rather than a reading of how fast. A cadence value at even\n\x09 * ten a second is five thousand rows in a session, and the recorder has been\n\x09 * here before: the headband's blink flag was written as rows until somebody\n\x09 * counted them and found nothing could use them.\n\x09 *\n\x09 * Call it once after Start Session as well, whatever the pedals are doing. The\n\x09 * analysis cannot tell a recording that never reported from a participant who\n\x09 * never moved, and it refuses to guess, so an opening call is what makes the\n\x09 * whole session readable rather than the part after the first change.\n\x09 *\n\x09 * What it is for: the calibration is the one stretch that is supposed to be\n\x09 * the participant at rest, and nothing in the file could say whether it was.\n\x09 */" },
+		{ "Comment", "/**\n\x09 * The bike's pedals started or stopped turning. Call on every change, or every\n\x09 * tick straight from the sensor: repeats of the same value are dropped here.\n\x09 *\n\x09 * Recorded as two edges, a start and a stop, which together give the whole\n\x09 * span of movement rather than a reading of how fast. A cadence value at even\n\x09 * ten a second is five thousand rows in a session, and the recorder has been\n\x09 * here before: the headband's blink flag was written as rows until somebody\n\x09 * counted them and found nothing could use them.\n\x09 *\n\x09 * Call it once after Start Session as well, whatever the pedals are doing. The\n\x09 * analysis cannot tell a recording that never reported from a participant who\n\x09 * never moved, and it refuses to guess, so an opening call is what makes the\n\x09 * whole session readable rather than the part after the first change.\n\x09 *\n\x09 * What it is for: the calibration is the one stretch that is supposed to be\n\x09 * the participant at rest, and nothing in the file could say whether it was.\n\x09 */" },
 		{ "DisplayName", "Set Pedalling" },
 		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
-		{ "ToolTip", "The bike's pedals started or stopped turning. Call on every change, or every\ntick straight from the sensor: repeats of the same value are dropped here.\n\nRecorded as two marks, `pedal:start` and `pedal:stop`, which is the whole\nspan of movement rather than a reading of how fast. A cadence value at even\nten a second is five thousand rows in a session, and the recorder has been\nhere before: the headband's blink flag was written as rows until somebody\ncounted them and found nothing could use them.\n\nCall it once after Start Session as well, whatever the pedals are doing. The\nanalysis cannot tell a recording that never reported from a participant who\nnever moved, and it refuses to guess, so an opening call is what makes the\nwhole session readable rather than the part after the first change.\n\nWhat it is for: the calibration is the one stretch that is supposed to be\nthe participant at rest, and nothing in the file could say whether it was." },
+		{ "ToolTip", "The bike's pedals started or stopped turning. Call on every change, or every\ntick straight from the sensor: repeats of the same value are dropped here.\n\nRecorded as two edges, a start and a stop, which together give the whole\nspan of movement rather than a reading of how fast. A cadence value at even\nten a second is five thousand rows in a session, and the recorder has been\nhere before: the headband's blink flag was written as rows until somebody\ncounted them and found nothing could use them.\n\nCall it once after Start Session as well, whatever the pedals are doing. The\nanalysis cannot tell a recording that never reported from a participant who\nnever moved, and it refuses to guess, so an opening call is what makes the\nwhole session readable rather than the part after the first change.\n\nWhat it is for: the calibration is the one stretch that is supposed to be\nthe participant at rest, and nothing in the file could say whether it was." },
 	};
 #endif // WITH_METADATA
 
@@ -818,7 +818,7 @@ struct UHT_STATICS
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsSessionActive, "IsSessionActive" }, // b1605c9e97dd2f3315119f8194a49ed456a9250d
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SendMark, "SendMark" }, // 499a2f3fcc57b928561dfee92935d95d6c0012dd
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetLocation, "SetLocation" }, // 2754007a02b372719df09291a6d6285d27751e1f
-		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling, "SetPedalling" }, // 8b1ebf5b4c3ab5767496aed35e30cbb1497772fd
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling, "SetPedalling" }, // 54a4cfce7ac8e47184f327be7203b6f2d55140c9
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetScenario, "SetScenario" }, // 0229bf2039d245dbc7009e0a83f0ccb3d07595b0
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_StartBaseline, "StartBaseline" }, // 1f575bb047f250c46b044ce0d5659bb4a6b9540c
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_StartSession, "StartSession" }, // 6b23f10d9c8e3f47329ec932c8c3131004e2a0b1
@@ -897,17 +897,17 @@ UVrLinkSubsystem::~UVrLinkSubsystem() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vbp3_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
 		{ Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, TEXT("EVrLinkCalibrationPhase"), &ZRIE_EVrLinkCalibrationPhase, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 793333249U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 2213396022U) },
+		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 1942252190U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_b469d22c0e58a44bf2b9fc99d3da6486d88c7c70{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vbp3_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_756e06eee9dd08f8fabaddf9d6a71a54c81e3037{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

@@ -286,9 +286,13 @@ void UVrLinkSubsystem::SetPedalling(bool bTurning)
 {
 	// The sensor is read every tick, so the same value arrives hundreds of times
 	// between the two moments anyone cares about. Unset until the first call, so an
-	// opening `pedal:stop` on an already-still bike is sent rather than collapsed:
+	// opening "not moving" on an already-still bike is sent rather than collapsed:
 	// a recording that never reported and a participant who never moved look the
 	// same in the file otherwise, and they are not the same fact.
+	//
+	// The tablet drops repeats as well. Both sides do it because either can be the
+	// one that is replaced, and the cost of the check is nothing next to the cost of
+	// an event log filled with rows saying the same thing.
 	if (LastPedalling.IsSet() && LastPedalling.GetValue() == bTurning)
 	{
 		return;
@@ -297,7 +301,7 @@ void UVrLinkSubsystem::SetPedalling(bool bTurning)
 	if (UVrLinkComponent* Link = RequireLink(TEXT("SetPedalling")))
 	{
 		LastPedalling = bTurning;
-		Link->SendMark(bTurning ? TEXT("pedal:start") : TEXT("pedal:stop"));
+		Link->SendPedal(bTurning);
 	}
 }
 
