@@ -29,10 +29,17 @@ class UVrLinkComponent;
  * folder of the same name over this one and all four files of a session sit
  * together, sharing the `{SessionId}_` prefix the analysis tool groups by.
  *
- * What the analysis actually uses: `HitObject` (which object was looked at, and
- * for how long) and `HitX/HitY/HitZ` (the 3D heat map). `GazeX/GazeY` are a
- * viewport projection that only carries information once eye tracking lands, see
- * the note on those properties.
+ * What the analysis actually uses: `HitX/HitY/HitZ`, the world point the ray
+ * landed on, which is the heat map. They are EMPTY when the ray hit nothing,
+ * and that emptiness is the only mark a miss carries. `GazeX/GazeY` are a
+ * viewport projection that only carries information once eye tracking lands,
+ * see the note on those properties.
+ *
+ * There used to be a `HitObject` column naming the actor the ray landed on.
+ * It was removed on 2026-09-14: on a streaming landscape almost nothing is
+ * tagged, so it read `LandscapeStreamingProxy_...` where it read anything at
+ * all, and the dwell analysis built on it measured how thoroughly the level
+ * had been labelled rather than where anyone looked.
  */
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent, DisplayName = "Gaze Recorder"))
 class VRLINK_API UGazeRecorder : public UActorComponent
@@ -104,17 +111,6 @@ public:
 	bool IsUsingEyeTracking() const { return bEyeGazeInUse; }
 
 	/**
-	 * Prefer an actor's first Tag over its object name for `HitObject`.
-	 *
-	 * This is the difference between an analysis column full of `StaticMeshActor_12`
-	 * and one full of `Green facade`. Tag the things you actually want measured
-	 * ("Trees", "Bike lane", "Facade"); untagged actors still record under their
-	 * object name.
-	 */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gaze")
-	bool bUseActorTagAsHitObject = true;
-
-	/**
 	 * Where the study-day folders live. Empty = `Documents/MuseEEG`, which mirrors the
 	 * tablet, so the two machines' files merge by copying one folder onto the other.
 	 * Set it only to write somewhere else on this PC.
@@ -172,9 +168,6 @@ private:
 
 	/** `Documents/MuseEEG/{sessionFolder}` (or the override), with the folder created. */
 	FString ResolveSessionDirectory() const;
-
-	/** Tag if there is one and tags are preferred, otherwise the object name. */
-	FString ResolveHitObjectName(const AActor* HitActor) const;
 
 	bool bRecording = false;
 	FString GazeFilePath;

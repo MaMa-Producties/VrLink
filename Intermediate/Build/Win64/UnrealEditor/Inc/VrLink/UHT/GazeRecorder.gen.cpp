@@ -208,11 +208,11 @@ struct UHT_STATICS
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "BlueprintSpawnableComponent", "" },
 		{ "ClassGroupNames", "Custom" },
-		{ "Comment", "/**\n * Records where the participant looks, into `{SessionId}_gaze.csv`.\n *\n * The only file the VR side writes. Everything else (EEG, events, session\n * metadata) is written by the tablet; gaze lives here because it needs the scene\n * geometry the tablet cannot see.\n *\n * Setup: add this component to an actor in the level (the VR pawn is the natural\n * home, but anywhere works, it reads the player camera). Nothing else. It finds\n * the VR Link component itself and follows the recording session:\n *\n *  - recording starts on the tablet  -> the file is opened\n *  - each frame                      -> one row (capped at Sample Rate Hz)\n *  - recording ends                  -> the file is flushed and closed\n *\n * The file goes in `Documents/MuseEEG/{sessionFolder}/`, where `sessionFolder` is\n * the study-day folder name the tablet sends in the handshake. Copy the tablet's\n * folder of the same name over this one and all four files of a session sit\n * together, sharing the `{SessionId}_` prefix the analysis tool groups by.\n *\n * What the analysis actually uses: `HitObject` (which object was looked at, and\n * for how long) and `HitX/HitY/HitZ` (the 3D heat map). `GazeX/GazeY` are a\n * viewport projection that only carries information once eye tracking lands, see\n * the note on those properties.\n */" },
+		{ "Comment", "/**\n * Records where the participant looks, into `{SessionId}_gaze.csv`.\n *\n * The only file the VR side writes. Everything else (EEG, events, session\n * metadata) is written by the tablet; gaze lives here because it needs the scene\n * geometry the tablet cannot see.\n *\n * Setup: add this component to an actor in the level (the VR pawn is the natural\n * home, but anywhere works, it reads the player camera). Nothing else. It finds\n * the VR Link component itself and follows the recording session:\n *\n *  - recording starts on the tablet  -> the file is opened\n *  - each frame                      -> one row (capped at Sample Rate Hz)\n *  - recording ends                  -> the file is flushed and closed\n *\n * The file goes in `Documents/MuseEEG/{sessionFolder}/`, where `sessionFolder` is\n * the study-day folder name the tablet sends in the handshake. Copy the tablet's\n * folder of the same name over this one and all four files of a session sit\n * together, sharing the `{SessionId}_` prefix the analysis tool groups by.\n *\n * What the analysis actually uses: `HitX/HitY/HitZ`, the world point the ray\n * landed on, which is the heat map. They are EMPTY when the ray hit nothing,\n * and that emptiness is the only mark a miss carries. `GazeX/GazeY` are a\n * viewport projection that only carries information once eye tracking lands,\n * see the note on those properties.\n *\n * There used to be a `HitObject` column naming the actor the ray landed on.\n * It was removed on 2026-09-14: on a streaming landscape almost nothing is\n * tagged, so it read `LandscapeStreamingProxy_...` where it read anything at\n * all, and the dwell analysis built on it measured how thoroughly the level\n * had been labelled rather than where anyone looked.\n */" },
 		{ "DisplayName", "Gaze Recorder" },
 		{ "IncludePath", "GazeRecorder.h" },
 		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
-		{ "ToolTip", "Records where the participant looks, into `{SessionId}_gaze.csv`.\n\nThe only file the VR side writes. Everything else (EEG, events, session\nmetadata) is written by the tablet; gaze lives here because it needs the scene\ngeometry the tablet cannot see.\n\nSetup: add this component to an actor in the level (the VR pawn is the natural\nhome, but anywhere works, it reads the player camera). Nothing else. It finds\nthe VR Link component itself and follows the recording session:\n\n - recording starts on the tablet  -> the file is opened\n - each frame                      -> one row (capped at Sample Rate Hz)\n - recording ends                  -> the file is flushed and closed\n\nThe file goes in `Documents/MuseEEG/{sessionFolder}/`, where `sessionFolder` is\nthe study-day folder name the tablet sends in the handshake. Copy the tablet's\nfolder of the same name over this one and all four files of a session sit\ntogether, sharing the `{SessionId}_` prefix the analysis tool groups by.\n\nWhat the analysis actually uses: `HitObject` (which object was looked at, and\nfor how long) and `HitX/HitY/HitZ` (the 3D heat map). `GazeX/GazeY` are a\nviewport projection that only carries information once eye tracking lands, see\nthe note on those properties." },
+		{ "ToolTip", "Records where the participant looks, into `{SessionId}_gaze.csv`.\n\nThe only file the VR side writes. Everything else (EEG, events, session\nmetadata) is written by the tablet; gaze lives here because it needs the scene\ngeometry the tablet cannot see.\n\nSetup: add this component to an actor in the level (the VR pawn is the natural\nhome, but anywhere works, it reads the player camera). Nothing else. It finds\nthe VR Link component itself and follows the recording session:\n\n - recording starts on the tablet  -> the file is opened\n - each frame                      -> one row (capped at Sample Rate Hz)\n - recording ends                  -> the file is flushed and closed\n\nThe file goes in `Documents/MuseEEG/{sessionFolder}/`, where `sessionFolder` is\nthe study-day folder name the tablet sends in the handshake. Copy the tablet's\nfolder of the same name over this one and all four files of a session sit\ntogether, sharing the `{SessionId}_` prefix the analysis tool groups by.\n\nWhat the analysis actually uses: `HitX/HitY/HitZ`, the world point the ray\nlanded on, which is the heat map. They are EMPTY when the ray hit nothing,\nand that emptiness is the only mark a miss carries. `GazeX/GazeY` are a\nviewport projection that only carries information once eye tracking lands,\nsee the note on those properties.\n\nThere used to be a `HitObject` column naming the actor the ray landed on.\nIt was removed on 2026-09-14: on a streaming landscape almost nothing is\ntagged, so it read `LandscapeStreamingProxy_...` where it read anything at\nall, and the dwell analysis built on it measured how thoroughly the level\nhad been labelled rather than where anyone looked." },
 	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_VrLink_MetaData[] = {
 		{ "Category", "Gaze" },
@@ -260,12 +260,6 @@ struct UHT_STATICS
 		{ "UIMax", "1.0" },
 		{ "UIMin", "0.0" },
 	};
-	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_bUseActorTagAsHitObject_MetaData[] = {
-		{ "Category", "Gaze" },
-		{ "Comment", "/**\n\x09 * Prefer an actor's first Tag over its object name for `HitObject`.\n\x09 *\n\x09 * This is the difference between an analysis column full of `StaticMeshActor_12`\n\x09 * and one full of `Green facade`. Tag the things you actually want measured\n\x09 * (\"Trees\", \"Bike lane\", \"Facade\"); untagged actors still record under their\n\x09 * object name.\n\x09 */" },
-		{ "ModuleRelativePath", "Public/GazeRecorder.h" },
-		{ "ToolTip", "Prefer an actor's first Tag over its object name for `HitObject`.\n\nThis is the difference between an analysis column full of `StaticMeshActor_12`\nand one full of `Green facade`. Tag the things you actually want measured\n(\"Trees\", \"Bike lane\", \"Facade\"); untagged actors still record under their\nobject name." },
-	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_OutputRootOverride_MetaData[] = {
 		{ "Category", "Gaze" },
 		{ "Comment", "/**\n\x09 * Where the study-day folders live. Empty = `Documents/MuseEEG`, which mirrors the\n\x09 * tablet, so the two machines' files merge by copying one folder onto the other.\n\x09 * Set it only to write somewhere else on this PC.\n\x09 */" },
@@ -293,11 +287,6 @@ struct UHT_STATICS
 	}
 	static const UECodeGen_Private::FBoolPropertyParams NewProp_bPreferEyeTracking;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_MinEyeConfidence;
-	static void NewProp_bUseActorTagAsHitObject_SetBit(void* Obj)
-	{
-		((UGazeRecorder*)Obj)->bUseActorTagAsHitObject = 1;
-	}
-	static const UECodeGen_Private::FBoolPropertyParams NewProp_bUseActorTagAsHitObject;
 	static const UECodeGen_Private::FStrPropertyParams NewProp_OutputRootOverride;
 	static const UECodeGen_Private::FFloatPropertyParams NewProp_FlushIntervalSeconds;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
@@ -327,7 +316,6 @@ const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_MaxTraceDista
 const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_TraceChannel = { "TraceChannel", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, TraceChannel), Z_Construct_UEnum_Engine_ECollisionChannel, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_TraceChannel_MetaData), NewProp_TraceChannel_MetaData) }; // 3aff698625c18cc2ccaa87a587b2eac8c50cdec7
 const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bPreferEyeTracking = { "bPreferEyeTracking", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(UGazeRecorder), &UHT_STATICS::NewProp_bPreferEyeTracking_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bPreferEyeTracking_MetaData), NewProp_bPreferEyeTracking_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_MinEyeConfidence = { "MinEyeConfidence", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, MinEyeConfidence), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_MinEyeConfidence_MetaData), NewProp_MinEyeConfidence_MetaData) };
-const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_bUseActorTagAsHitObject = { "bUseActorTagAsHitObject", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(UGazeRecorder), &UHT_STATICS::NewProp_bUseActorTagAsHitObject_SetBit, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_bUseActorTagAsHitObject_MetaData), NewProp_bUseActorTagAsHitObject_MetaData) };
 const UECodeGen_Private::FStrPropertyParams UHT_STATICS::NewProp_OutputRootOverride = { "OutputRootOverride", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Str, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, OutputRootOverride), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OutputRootOverride_MetaData), NewProp_OutputRootOverride_MetaData) };
 const UECodeGen_Private::FFloatPropertyParams UHT_STATICS::NewProp_FlushIntervalSeconds = { "FlushIntervalSeconds", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Float, nullptr, nullptr, 1, STRUCT_OFFSET(UGazeRecorder, FlushIntervalSeconds), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_FlushIntervalSeconds_MetaData), NewProp_FlushIntervalSeconds_MetaData) };
 const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
@@ -337,7 +325,6 @@ const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] 
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_TraceChannel,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bPreferEyeTracking,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_MinEyeConfidence,
-	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_bUseActorTagAsHitObject,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OutputRootOverride,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_FlushIntervalSeconds,
 };
@@ -410,14 +397,14 @@ UGazeRecorder::~UGazeRecorder() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UGazeRecorder, TEXT("UGazeRecorder"), &Z_Registration_Info_UClass_UGazeRecorder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UGazeRecorder), 1123429576U) },
+		{ Z_Construct_UClass_UGazeRecorder, TEXT("UGazeRecorder"), &Z_Registration_Info_UClass_UGazeRecorder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UGazeRecorder), 2113015596U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_3fdfd2f5e4eb069e65d707eb5764684f0b1a210e{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_33d9cf5cbdd8b7c75ab53fb85a0a896b475bf31d{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

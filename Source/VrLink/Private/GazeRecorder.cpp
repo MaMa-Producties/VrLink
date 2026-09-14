@@ -29,7 +29,7 @@ namespace
 	 * means updating both of those documents in the same change.
 	 */
 	const TCHAR* const GazeCsvHeader =
-		TEXT("SessionId,Time,WallUtc,Source,Valid,GazeX,GazeY,HitObject,")
+		TEXT("SessionId,Time,WallUtc,Source,Valid,GazeX,GazeY,")
 		TEXT("HeadX,HeadY,HeadZ,DirX,DirY,DirZ,HitX,HitY,HitZ,Scene\n");
 
 	/**
@@ -306,14 +306,19 @@ void UGazeRecorder::CaptureSample()
 	const bool bHit = World->LineTraceSingleByChannel(Hit, Origin, RayEnd, TraceChannel, Params);
 
 	// A miss is still a real sample (they are looking at the sky, or past everything).
-	// It records the far end of the ray with an empty HitObject rather than being dropped.
+	// It is written with NO world position rather than being dropped, and rather than
+	// recording the far end of the ray, which is what it used to do: that put a point
+	// kilometres away in the three columns the heat map is built from, marked as not
+	// real only by an empty name in the column beside it. Blank says nowhere, once.
 	const FVector HitPoint = bHit ? Hit.ImpactPoint : RayEnd;
-	const FString HitObject = bHit ? ResolveHitObjectName(Hit.GetActor()) : FString();
+	const FString HitColumns = bHit
+		? FString::Printf(TEXT("%.1f,%.1f,%.1f"), HitPoint.X, HitPoint.Y, HitPoint.Z)
+		: FString(TEXT(",,"));
 
 	// Viewport coordinates of the hit point. For head gaze the ray IS the view axis, so
 	// this is the centre of the view on every row and carries no information; it is kept
 	// because the column is part of the contract and becomes meaningful the moment eye
-	// tracking starts writing Source=eye. The analysis signal is HitObject and Hit*.
+	// tracking starts writing Source=eye. The analysis signal is Hit*.
 	FString GazeX, GazeY;
 	FVector2D Screen = FVector2D::ZeroVector;
 	int32 ViewX = 0, ViewY = 0;
@@ -333,12 +338,12 @@ void UGazeRecorder::CaptureSample()
 	const FString WallUtc = FDateTime::UtcNow().ToIso8601();
 
 	RowBuffer += FString::Printf(
-		TEXT("%s,%.3f,%s,%s,1,%s,%s,%s,%.1f,%.1f,%.1f,%.4f,%.4f,%.4f,%.1f,%.1f,%.1f,%s\n"),
+		TEXT("%s,%.3f,%s,%s,1,%s,%s,%.1f,%.1f,%.1f,%.4f,%.4f,%.4f,%s,%s\n"),
 		*Csv(RecordingSessionId), Time, *WallUtc, bEye ? GazeSourceEye : GazeSourceHead,
-		*GazeX, *GazeY, *Csv(HitObject),
+		*GazeX, *GazeY,
 		Head.X, Head.Y, Head.Z,
 		Direction.X, Direction.Y, Direction.Z,
-		HitPoint.X, HitPoint.Y, HitPoint.Z,
+		*HitColumns,
 		*Csv(VrLink->GetCurrentScene()));
 
 	++RowCount;
@@ -448,24 +453,4 @@ FString UGazeRecorder::ResolveSessionDirectory() const
 		return FString();
 	}
 	return Directory;
-}
-
-FString UGazeRecorder::ResolveHitObjectName(const AActor* HitActor) const
-{
-	if (!HitActor)
-	{
-		return FString();
-	}
-
-	// A tag is what the designer chose to call this thing ("Green facade"); the object
-	// name is whatever Unreal generated ("StaticMeshActor_12"). Prefer the tag, because
-	// this column is read by a person deciding whether a design worked.
-	if (bUseActorTagAsHitObject && HitActor->Tags.Num() > 0)
-	{
-		return HitActor->Tags[0].ToString();
-	}
-
-	// Deliberately not GetActorLabel(): that is editor-only, so a packaged run would
-	// record different names than a PIE run and the two could not be compared.
-	return HitActor->GetName();
 }

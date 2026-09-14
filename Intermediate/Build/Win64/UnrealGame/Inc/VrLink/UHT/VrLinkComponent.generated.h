@@ -24,7 +24,7 @@ enum class EStepKind : uint8;
 struct Z_Construct_UScriptStruct_FExperienceStep_Statics;
 VRLINK_API UScriptStruct* Z_Construct_UScriptStruct_FExperienceStep(ETypeConstructPhase);
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_64_GENERATED_BODY \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_64_GENERATED_BODY \
 	friend struct ::Z_Construct_UScriptStruct_FExperienceStep_Statics; \
 	UE_NODEBUG static UScriptStruct* StaticStruct() { return Z_Construct_UScriptStruct_FExperienceStep(ETypeConstructPhase::Inner); }
 
@@ -36,7 +36,7 @@ struct FExperienceStep;
 struct Z_Construct_UScriptStruct_FVrLinkVariable_Statics;
 VRLINK_API UScriptStruct* Z_Construct_UScriptStruct_FVrLinkVariable(ETypeConstructPhase);
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_98_GENERATED_BODY \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_98_GENERATED_BODY \
 	friend struct ::Z_Construct_UScriptStruct_FVrLinkVariable_Statics; \
 	UE_NODEBUG static UScriptStruct* StaticStruct() { return Z_Construct_UScriptStruct_FVrLinkVariable(ETypeConstructPhase::Inner); }
 
@@ -48,7 +48,7 @@ struct FVrLinkVariable;
 struct Z_Construct_UScriptStruct_FVrLinkStudyConfig_Statics;
 VRLINK_API UScriptStruct* Z_Construct_UScriptStruct_FVrLinkStudyConfig(ETypeConstructPhase);
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_117_GENERATED_BODY \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_117_GENERATED_BODY \
 	friend struct ::Z_Construct_UScriptStruct_FVrLinkStudyConfig_Statics; \
 	UE_NODEBUG static UScriptStruct* StaticStruct() { return Z_Construct_UScriptStruct_FVrLinkStudyConfig(ETypeConstructPhase::Inner); }
 
@@ -57,7 +57,7 @@ struct FVrLinkStudyConfig;
 // ********** End ScriptStruct FVrLinkStudyConfig **************************************************
 
 // ********** Begin Class UVrLinkComponent *********************************************************
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execHandleLine); \
 	DECLARE_FUNCTION(execOnStartTriggerOverlap); \
 	DECLARE_FUNCTION(execGetCurrentScene); \
@@ -80,7 +80,7 @@ struct FVrLinkStudyConfig;
 struct Z_Construct_UClass_UVrLinkComponent_Statics;
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkComponent(ETypeConstructPhase);
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_INCLASS_NO_PURE_DECLS \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_INCLASS_NO_PURE_DECLS \
 private: \
 	friend struct ::Z_Construct_UClass_UVrLinkComponent_Statics; \
 	friend VRLINK_API UClass* ::Z_Construct_UClass_UVrLinkComponent(ETypeConstructPhase); \
@@ -89,7 +89,7 @@ public: \
 	DECLARE_SERIALIZER(UVrLinkComponent)
 
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_ENHANCED_CONSTRUCTORS \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_ENHANCED_CONSTRUCTORS \
 	/** Deleted move- and copy-constructors, should never be used */ \
 	UVrLinkComponent(UVrLinkComponent&&) = delete; \
 	UVrLinkComponent(const UVrLinkComponent&) = delete; \
@@ -99,13 +99,13 @@ public: \
 	NO_API virtual ~UVrLinkComponent();
 
 
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_198_PROLOG
-#define FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_GENERATED_BODY \
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_198_PROLOG
+#define FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_INCLASS_NO_PURE_DECLS \
-	FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_ENHANCED_CONSTRUCTORS \
+	FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_INCLASS_NO_PURE_DECLS \
+	FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h_201_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -115,7 +115,7 @@ class UVrLinkComponent;
 // ********** End Class UVrLinkComponent ***********************************************************
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_vb58_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h
+#define CURRENT_FILE_ID FID_vb58c_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h
 
 // ********** Begin Enum EStepKind *****************************************************************
 #define FOREACH_ENUM_ESTEPKIND(op) \
