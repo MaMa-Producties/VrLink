@@ -2,9 +2,11 @@
 
 
 #include "VrLinkComponent.h"
+#include "VrLinkSubsystem.h"
 #include "TCPSocket.h"
 #include "NetworkManager.h"
 #include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
@@ -488,6 +490,24 @@ void UVrLinkComponent::HandleLine(FString Line)
 		// Ack to our own session.end; nothing further to do on this side.
 		UE_LOG(LogTemp, Log, TEXT("[vrlink] Peer saved its session file."));
 	}
+	else if (Type == TEXT("headband"))
+	{
+		// Forwarded to the subsystem rather than kept here: the state has to survive a
+		// level change, and this component does not. A participant who takes the band
+		// off during a loading screen would otherwise come back reading Ready.
+		FString State;
+		Msg->TryGetStringField(TEXT("state"), State);
+		if (const UWorld* World = GetWorld())
+		{
+			if (UGameInstance* GI = World->GetGameInstance())
+			{
+				if (UVrLinkSubsystem* Link = GI->GetSubsystem<UVrLinkSubsystem>())
+				{
+					Link->ReportHeadband(State);
+				}
+			}
+		}
+	}
 	else if (Type == TEXT("ping"))
 	{
 		// Keepalive: no-op (the OS-level connection staying up is the signal).
@@ -498,8 +518,8 @@ void UVrLinkComponent::HandleLine(FString Line)
 		Msg->TryGetStringField(TEXT("message"), ErrText);
 		UE_LOG(LogTemp, Error, TEXT("[vrlink] Peer error: %s"), *ErrText);
 	}
-	// `welcome`, `reject`, `state`, `baseline.*`, `mark`, `gaze` are Unreal -> Unity
-	// (or handshake replies to Unity); inbound copies are ignored here.
+	// `welcome`, `reject`, `state`, `baseline.*`, `mark`, `pedal`, `gaze` are
+	// Unreal -> Unity (or handshake replies to Unity); inbound copies are ignored here.
 }
 
 void UVrLinkComponent::HandleHello(const TSharedPtr<FJsonObject>& Msg)

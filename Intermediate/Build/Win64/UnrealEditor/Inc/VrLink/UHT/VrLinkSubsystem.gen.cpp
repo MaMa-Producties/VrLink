@@ -19,6 +19,8 @@ ENGINE_API UClass* Z_Construct_UClass_UGameInstanceSubsystem(ETypeConstructPhase
 // ********** Begin Same Module References *********************************************************
 UPackage* Z_Construct_UPackage__Script_VrLink(ETypeConstructPhase);
 VRLINK_API UEnum* Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase(ETypeConstructPhase);
+VRLINK_API UEnum* Z_Construct_UEnum_VrLink_EVrLinkHeadbandState(ETypeConstructPhase);
+VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_VrLinkHeadbandChanged__DelegateSignature(ETypeConstructPhase);
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase);
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase);
 // ********** End Same Module References ***********************************************************
@@ -94,6 +96,192 @@ UEnum* Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase(ETypeConstructPhase Phas
 }
 #undef UHT_STATICS
 // ********** End Enum EVrLinkCalibrationPhase *****************************************************
+
+// ********** Begin Enum EVrLinkHeadbandState ******************************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UEnum_VrLink_EVrLinkHeadbandState_Statics
+template<> VRLINK_NON_ATTRIBUTED_API UEnum* StaticEnum<EVrLinkHeadbandState>()
+{
+	return Z_Construct_UEnum_VrLink_EVrLinkHeadbandState(ETypeConstructPhase::Outer);
+}
+struct UHT_STATICS
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Absent.Comment", "/** Nothing connected. Nothing can be recorded. */" },
+		{ "Absent.DisplayName", "Absent (nothing connected)" },
+		{ "Absent.Name", "EVrLinkHeadbandState::Absent" },
+		{ "Absent.ToolTip", "Nothing connected. Nothing can be recorded." },
+		{ "BlueprintType", "true" },
+		{ "Comment", "/**\n * What the tablet's headband is doing, worst first.\n *\n * The order is the point: these compare, so \"at least Poor\" is a range rather\n * than a list, and a state this build has never heard of cannot accidentally\n * read as good.\n *\n * Absent is 0 deliberately. A host that has heard nothing, because the tablet\n * is an older build or the link has gone quiet, holds this value, and silence\n * is not evidence that a headband is on somebody's head.\n */" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "OffHead.Comment", "/** Connected, not being worn. */" },
+		{ "OffHead.DisplayName", "Off head (not being worn)" },
+		{ "OffHead.Name", "EVrLinkHeadbandState::OffHead" },
+		{ "OffHead.ToolTip", "Connected, not being worn." },
+		{ "Poor.Comment", "/** Worn, but a sensor has lost contact. Usually wants reseating. */" },
+		{ "Poor.DisplayName", "Poor contact" },
+		{ "Poor.Name", "EVrLinkHeadbandState::Poor" },
+		{ "Poor.ToolTip", "Worn, but a sensor has lost contact. Usually wants reseating." },
+		{ "Ready.Comment", "/** Worn, good contact. The only state a baseline should begin in. */" },
+		{ "Ready.DisplayName", "Ready" },
+		{ "Ready.Name", "EVrLinkHeadbandState::Ready" },
+		{ "Ready.ToolTip", "Worn, good contact. The only state a baseline should begin in." },
+		{ "ToolTip", "What the tablet's headband is doing, worst first.\n\nThe order is the point: these compare, so \"at least Poor\" is a range rather\nthan a list, and a state this build has never heard of cannot accidentally\nread as good.\n\nAbsent is 0 deliberately. A host that has heard nothing, because the tablet\nis an older build or the link has gone quiet, holds this value, and silence\nis not evidence that a headband is on somebody's head." },
+	};
+#endif // WITH_METADATA
+	static constexpr UECodeGen_Private::FEnumeratorParam Enumerators[] = {
+		{ "EVrLinkHeadbandState::Absent", (int64)EVrLinkHeadbandState::Absent },
+		{ "EVrLinkHeadbandState::OffHead", (int64)EVrLinkHeadbandState::OffHead },
+		{ "EVrLinkHeadbandState::Poor", (int64)EVrLinkHeadbandState::Poor },
+		{ "EVrLinkHeadbandState::Ready", (int64)EVrLinkHeadbandState::Ready },
+	};
+	static const UECodeGen_Private::FEnumParams EnumParams;
+}; // struct UHT_STATICS 
+const UECodeGen_Private::FEnumParams UHT_STATICS::EnumParams = {
+	(FTypeConstructFunc*)Z_Construct_UPackage__Script_VrLink,
+	nullptr,
+	"EVrLinkHeadbandState",
+	"EVrLinkHeadbandState",
+	UHT_STATICS::Enumerators,
+	RF_Public|RF_Transient|RF_MarkAsNative,
+	UE_ARRAY_COUNT(UHT_STATICS::Enumerators),
+	EEnumFlags::None,
+	(uint8)UEnum::ECppForm::EnumClass,
+	(uint8)UEnum::EUnderlyingType::uint8,
+	METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)
+};
+static FEnumRegistrationInfo ZRIE_EVrLinkHeadbandState;
+UEnum* Z_Construct_UEnum_VrLink_EVrLinkHeadbandState(ETypeConstructPhase Phase)
+{
+	if (Phase == ETypeConstructPhase::Outer)
+	{
+		if (!ZRIE_EVrLinkHeadbandState.OuterSingleton)
+		{
+			ZRIE_EVrLinkHeadbandState.OuterSingleton = GetStaticEnum(Z_Construct_UEnum_VrLink_EVrLinkHeadbandState, (UObject*)Z_Construct_UPackage__Script_VrLink(ETypeConstructPhase::Outer), TEXT("EVrLinkHeadbandState"));
+		}
+		return ZRIE_EVrLinkHeadbandState.OuterSingleton;
+	}
+	if (!ZRIE_EVrLinkHeadbandState.InnerSingleton)
+	{
+		UECodeGen_Private::ConstructUEnum(ZRIE_EVrLinkHeadbandState.InnerSingleton, UHT_STATICS::EnumParams);
+	}
+	return ZRIE_EVrLinkHeadbandState.InnerSingleton;
+}
+#undef UHT_STATICS
+// ********** End Enum EVrLinkHeadbandState ********************************************************
+
+// ********** Begin Delegate FVrLinkHeadbandChanged ************************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UDelegateFunction_VrLink_VrLinkHeadbandChanged__DelegateSignature_Statics
+struct UHT_STATICS
+{
+	struct _Script_VrLink_eventVrLinkHeadbandChanged_Parms
+	{
+		EVrLinkHeadbandState State;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Comment", "/** Fires whenever the headband state changes, including when it goes stale to Absent. */" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Fires whenever the headband state changes, including when it goes stale to Absent." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Delegate FVrLinkHeadbandChanged constinit property declarations ****************
+	static const UECodeGen_Private::FBytePropertyParams NewProp_State_Underlying;
+	static const UECodeGen_Private::FEnumPropertyParams NewProp_State;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Delegate FVrLinkHeadbandChanged constinit property declarations ******************
+	static const UECodeGen_Private::FDelegateFunctionParams FuncParams;
+};
+
+// ********** Begin Delegate FVrLinkHeadbandChanged Property Definitions ***************************
+const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_State_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, 0, nullptr, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FEnumPropertyParams UHT_STATICS::NewProp_State = { "State", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Enum, nullptr, nullptr, 1, STRUCT_OFFSET(_Script_VrLink_eventVrLinkHeadbandChanged_Parms, State), Z_Construct_UEnum_VrLink_EVrLinkHeadbandState, METADATA_PARAMS(0, nullptr) }; // ff1279bb2ab133d76edb60c47ffc4fd92c163f2f
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_State_Underlying,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_State,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Delegate FVrLinkHeadbandChanged Property Definitions *****************************
+const UECodeGen_Private::FDelegateFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UPackage__Script_VrLink, nullptr, "VrLinkHeadbandChanged__DelegateSignature", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::_Script_VrLink_eventVrLinkHeadbandChanged_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x00130000, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::_Script_VrLink_eventVrLinkHeadbandChanged_Parms) < MAX_uint16);
+UFunction* Z_Construct_UDelegateFunction_VrLink_VrLinkHeadbandChanged__DelegateSignature(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUDelegateFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+// ********** End Delegate FVrLinkHeadbandChanged **************************************************
+
+// ********** Begin Class UVrLinkSubsystem Function CanStartBaseline *******************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_CanStartBaseline_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventCanStartBaseline_Parms
+	{
+		bool ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/**\n\x09 * Whether a baseline may begin. True from Poor upward.\n\x09 *\n\x09 * Poor is allowed on purpose. It means the band is on the head with one\n\x09 * sensor complaining, which is a recording worth having and often the best\n\x09 * a given head and a given band will do. Absent and Off head are not: there\n\x09 * is no EEG at all, and everything measured against that baseline, which is\n\x09 * the whole ride, is worthless.\n\x09 *\n\x09 * Also true on a tablet that has never reported at all, which is every build\n\x09 * before 2026-09-14. Refusing there would hold the baseline forever against a\n\x09 * tablet doing nothing wrong, and an experience that will not start is worse\n\x09 * on a test day than one that starts unverified. The refusal says so loudly\n\x09 * instead. Once a tablet has reported once, its silence is a disconnection\n\x09 * rather than a version, and it is read as Absent like any other.\n\x09 */" },
+		{ "DisplayName", "Can Start Baseline" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Whether a baseline may begin. True from Poor upward.\n\nPoor is allowed on purpose. It means the band is on the head with one\nsensor complaining, which is a recording worth having and often the best\na given head and a given band will do. Absent and Off head are not: there\nis no EEG at all, and everything measured against that baseline, which is\nthe whole ride, is worthless.\n\nAlso true on a tablet that has never reported at all, which is every build\nbefore 2026-09-14. Refusing there would hold the baseline forever against a\ntablet doing nothing wrong, and an experience that will not start is worse\non a test day than one that starts unverified. The refusal says so loudly\ninstead. Once a tablet has reported once, its silence is a disconnection\nrather than a version, and it is read as Absent like any other." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function CanStartBaseline constinit property declarations **********************
+	static void NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((VrLinkSubsystem_eventCanStartBaseline_Parms*)Obj)->ReturnValue = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function CanStartBaseline constinit property declarations ************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function CanStartBaseline Property Definitions *********************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkSubsystem_eventCanStartBaseline_Parms), &UHT_STATICS::NewProp_ReturnValue_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function CanStartBaseline Property Definitions ***********************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "CanStartBaseline", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventCanStartBaseline_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventCanStartBaseline_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_CanStartBaseline(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execCanStartBaseline)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(bool*)Z_Param__Result=P_THIS->CanStartBaseline();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function CanStartBaseline *********************************
 
 // ********** Begin Class UVrLinkSubsystem Function EndBaseline ************************************
 #ifdef UHT_STATICS
@@ -256,6 +444,121 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execEndSession)
 }
 // ********** End Class UVrLinkSubsystem Function EndSession ***************************************
 
+// ********** Begin Class UVrLinkSubsystem Function GetHeadbandMessage *****************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandMessage_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventGetHeadbandMessage_Parms
+	{
+		FText ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/**\n\x09 * A line to show the participant, or empty when the headband is ready.\n\x09 *\n\x09 * Empty is the signal to hide the message, so a single Set Text and a\n\x09 * Set Visibility is the whole of it in Blueprint. The words are aimed at\n\x09 * whoever can act: the participant can seat a band, only the operator can\n\x09 * find one that is not there.\n\x09 */" },
+		{ "DisplayName", "Get Headband Message" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "A line to show the participant, or empty when the headband is ready.\n\nEmpty is the signal to hide the message, so a single Set Text and a\nSet Visibility is the whole of it in Blueprint. The words are aimed at\nwhoever can act: the participant can seat a band, only the operator can\nfind one that is not there." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function GetHeadbandMessage constinit property declarations ********************
+	static const UECodeGen_Private::FTextPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function GetHeadbandMessage constinit property declarations **********************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function GetHeadbandMessage Property Definitions *******************************
+const UECodeGen_Private::FTextPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Text, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkSubsystem_eventGetHeadbandMessage_Parms, ReturnValue), METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function GetHeadbandMessage Property Definitions *********************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "GetHeadbandMessage", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventGetHeadbandMessage_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventGetHeadbandMessage_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandMessage(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execGetHeadbandMessage)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(FText*)Z_Param__Result=P_THIS->GetHeadbandMessage();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function GetHeadbandMessage *******************************
+
+// ********** Begin Class UVrLinkSubsystem Function GetHeadbandState *******************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandState_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventGetHeadbandState_Parms
+	{
+		EVrLinkHeadbandState ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/**\n\x09 * Whether the participant is wearing a working headband right now.\n\x09 *\n\x09 * Absent until the tablet says otherwise. A tablet too old to send the\n\x09 * message, and a link that has gone quiet, both leave it here.\n\x09 */" },
+		{ "DisplayName", "Get Headband State" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Whether the participant is wearing a working headband right now.\n\nAbsent until the tablet says otherwise. A tablet too old to send the\nmessage, and a link that has gone quiet, both leave it here." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function GetHeadbandState constinit property declarations **********************
+	static const UECodeGen_Private::FBytePropertyParams NewProp_ReturnValue_Underlying;
+	static const UECodeGen_Private::FEnumPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function GetHeadbandState constinit property declarations ************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function GetHeadbandState Property Definitions *********************************
+const UECodeGen_Private::FBytePropertyParams UHT_STATICS::NewProp_ReturnValue_Underlying = { "UnderlyingType", nullptr, (EPropertyFlags)0x0000000000000000, UECodeGen_Private::EPropertyGenFlags::Byte, nullptr, nullptr, 1, 0, nullptr, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FEnumPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Enum, nullptr, nullptr, 1, STRUCT_OFFSET(VrLinkSubsystem_eventGetHeadbandState_Parms, ReturnValue), Z_Construct_UEnum_VrLink_EVrLinkHeadbandState, METADATA_PARAMS(0, nullptr) }; // ff1279bb2ab133d76edb60c47ffc4fd92c163f2f
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue_Underlying,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function GetHeadbandState Property Definitions ***********************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "GetHeadbandState", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventGetHeadbandState_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventGetHeadbandState_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandState(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execGetHeadbandState)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(EVrLinkHeadbandState*)Z_Param__Result=P_THIS->GetHeadbandState();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function GetHeadbandState *********************************
+
 // ********** Begin Class UVrLinkSubsystem Function GetSessionId ***********************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -378,6 +681,126 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execInitializeVrLink)
 	P_NATIVE_END;
 }
 // ********** End Class UVrLinkSubsystem Function InitializeVrLink *********************************
+
+// ********** Begin Class UVrLinkSubsystem Function IsHeadbandKnown ********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandKnown_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventIsHeadbandKnown_Parms
+	{
+		bool ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/**\n\x09 * Whether this tablet reports its headband at all.\n\x09 *\n\x09 * False before the first report, and on any tablet build older than\n\x09 * 2026-09-14. It separates the two silences, which look identical from here\n\x09 * and are not the same fact: a tablet that cannot answer, and a tablet that\n\x09 * has stopped answering.\n\x09 */" },
+		{ "DisplayName", "Is Headband Known" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Whether this tablet reports its headband at all.\n\nFalse before the first report, and on any tablet build older than\n2026-09-14. It separates the two silences, which look identical from here\nand are not the same fact: a tablet that cannot answer, and a tablet that\nhas stopped answering." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function IsHeadbandKnown constinit property declarations ***********************
+	static void NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((VrLinkSubsystem_eventIsHeadbandKnown_Parms*)Obj)->ReturnValue = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function IsHeadbandKnown constinit property declarations *************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function IsHeadbandKnown Property Definitions **********************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkSubsystem_eventIsHeadbandKnown_Parms), &UHT_STATICS::NewProp_ReturnValue_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function IsHeadbandKnown Property Definitions ************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "IsHeadbandKnown", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventIsHeadbandKnown_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventIsHeadbandKnown_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandKnown(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execIsHeadbandKnown)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(bool*)Z_Param__Result=P_THIS->IsHeadbandKnown();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function IsHeadbandKnown **********************************
+
+// ********** Begin Class UVrLinkSubsystem Function IsHeadbandReady ********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandReady_Statics
+struct UHT_STATICS
+{
+	struct VrLinkSubsystem_eventIsHeadbandReady_Parms
+	{
+		bool ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/** Connected, worn, all four sensors in contact. */" },
+		{ "DisplayName", "Is Headband Ready" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Connected, worn, all four sensors in contact." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function IsHeadbandReady constinit property declarations ***********************
+	static void NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((VrLinkSubsystem_eventIsHeadbandReady_Parms*)Obj)->ReturnValue = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function IsHeadbandReady constinit property declarations *************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function IsHeadbandReady Property Definitions **********************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkSubsystem_eventIsHeadbandReady_Parms), &UHT_STATICS::NewProp_ReturnValue_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function IsHeadbandReady Property Definitions ************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "IsHeadbandReady", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkSubsystem_eventIsHeadbandReady_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkSubsystem_eventIsHeadbandReady_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandReady(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execIsHeadbandReady)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(bool*)Z_Param__Result=P_THIS->IsHeadbandReady();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function IsHeadbandReady **********************************
 
 // ********** Begin Class UVrLinkSubsystem Function IsSessionActive ********************************
 #ifdef UHT_STATICS
@@ -790,16 +1213,30 @@ struct UHT_STATICS
 		{ "IncludePath", "VrLinkSubsystem.h" },
 		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_OnHeadbandStateChanged_MetaData[] = {
+		{ "Category", "VR Link|Headband" },
+		{ "Comment", "/**\n\x09 * Fires on every change, so a widget can follow it rather than polling.\n\x09 *\n\x09 * It fires for a drop mid-ride too. Show it and keep going: stopping would\n\x09 * lose the gaze stream and the questionnaire as well, and whether to restart\n\x09 * is the operator's call rather than the experience's.\n\x09 */" },
+		{ "DisplayName", "On Headband State Changed" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Fires on every change, so a widget can follow it rather than polling.\n\nIt fires for a drop mid-ride too. Show it and keep going: stopping would\nlose the gaze stream and the questionnaire as well, and whether to restart\nis the operator's call rather than the experience's." },
+	};
 #endif // WITH_METADATA
 
 // ********** Begin Class UVrLinkSubsystem constinit property declarations *************************
+	static const UECodeGen_Private::FMulticastDelegatePropertyParams NewProp_OnHeadbandStateChanged;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
 // ********** End Class UVrLinkSubsystem constinit property declarations ***************************
 	static constexpr UE::CodeGen::FClassNativeFunction Funcs[] = {
+		{ .NameUTF8 = UTF8TEXT("CanStartBaseline"), .Pointer = &UVrLinkSubsystem::execCanStartBaseline },
 		{ .NameUTF8 = UTF8TEXT("EndBaseline"), .Pointer = &UVrLinkSubsystem::execEndBaseline },
 		{ .NameUTF8 = UTF8TEXT("EndScenario"), .Pointer = &UVrLinkSubsystem::execEndScenario },
 		{ .NameUTF8 = UTF8TEXT("EndSession"), .Pointer = &UVrLinkSubsystem::execEndSession },
+		{ .NameUTF8 = UTF8TEXT("GetHeadbandMessage"), .Pointer = &UVrLinkSubsystem::execGetHeadbandMessage },
+		{ .NameUTF8 = UTF8TEXT("GetHeadbandState"), .Pointer = &UVrLinkSubsystem::execGetHeadbandState },
 		{ .NameUTF8 = UTF8TEXT("GetSessionId"), .Pointer = &UVrLinkSubsystem::execGetSessionId },
 		{ .NameUTF8 = UTF8TEXT("InitializeVrLink"), .Pointer = &UVrLinkSubsystem::execInitializeVrLink },
+		{ .NameUTF8 = UTF8TEXT("IsHeadbandKnown"), .Pointer = &UVrLinkSubsystem::execIsHeadbandKnown },
+		{ .NameUTF8 = UTF8TEXT("IsHeadbandReady"), .Pointer = &UVrLinkSubsystem::execIsHeadbandReady },
 		{ .NameUTF8 = UTF8TEXT("IsSessionActive"), .Pointer = &UVrLinkSubsystem::execIsSessionActive },
 		{ .NameUTF8 = UTF8TEXT("SendMark"), .Pointer = &UVrLinkSubsystem::execSendMark },
 		{ .NameUTF8 = UTF8TEXT("SetLocation"), .Pointer = &UVrLinkSubsystem::execSetLocation },
@@ -810,11 +1247,16 @@ struct UHT_STATICS
 	};
 	static FTypeConstructFunc* DependentSingletons[];
 	static constexpr FClassFunctionLinkInfo FuncInfo[] = {
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_CanStartBaseline, "CanStartBaseline" }, // 272c6c914c29f4ea948f2fdbe08198143d30f65f
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndBaseline, "EndBaseline" }, // 7635acf21b7dbb3c8cd6600093fa05be7d9557ab
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndScenario, "EndScenario" }, // 8fcf4fe8a90941627b68213b80e6cdcfdf271a8b
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_EndSession, "EndSession" }, // 6ff681d5058c287f1aa2f6223862e4e390581a74
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandMessage, "GetHeadbandMessage" }, // 0853f799380aeff804aa5983a387d114fd40022a
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_GetHeadbandState, "GetHeadbandState" }, // 15abda7dae4424d3e199b691a3d3dca2f576ac45
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_GetSessionId, "GetSessionId" }, // 59047d22e52152fdb9f4ebbd8fbf290d9159ba43
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_InitializeVrLink, "InitializeVrLink" }, // 4e2f529394a68500b8fd18e80fbc569221d1ed6a
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandKnown, "IsHeadbandKnown" }, // 80510c1ad8e0344c9d3054f52fd00bb5a24aadd0
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandReady, "IsHeadbandReady" }, // 78461b5b4d7fab818e02511b64fc4bdd75e322a2
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsSessionActive, "IsSessionActive" }, // b1605c9e97dd2f3315119f8194a49ed456a9250d
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SendMark, "SendMark" }, // 499a2f3fcc57b928561dfee92935d95d6c0012dd
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetLocation, "SetLocation" }, // 2754007a02b372719df09291a6d6285d27751e1f
@@ -829,6 +1271,14 @@ struct UHT_STATICS
 	};
 	static const UECodeGen_Private::FClassParams ClassParams;
 }; // struct UHT_STATICS
+
+// ********** Begin Class UVrLinkSubsystem Property Definitions ************************************
+const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_OnHeadbandStateChanged = { "OnHeadbandStateChanged", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkSubsystem, OnHeadbandStateChanged), Z_Construct_UDelegateFunction_VrLink_VrLinkHeadbandChanged__DelegateSignature, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OnHeadbandStateChanged_MetaData), NewProp_OnHeadbandStateChanged_MetaData) }; // d12207918a4c6b36c3d38db00ad19e7c1837bdbc
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OnHeadbandStateChanged,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Class UVrLinkSubsystem Property Definitions **************************************
 FTypeConstructFunc* UHT_STATICS::DependentSingletons[] = {
 	(FTypeConstructFunc*)Z_Construct_UClass_UGameInstanceSubsystem,
 	(FTypeConstructFunc*)Z_Construct_UPackage__Script_VrLink,
@@ -840,13 +1290,13 @@ const UECodeGen_Private::FClassParams UHT_STATICS::ClassParams = {
 	&StaticCppClassTypeInfo,
 	DependentSingletons,
 	FuncInfo,
-	nullptr,
+	UHT_STATICS::PropPointers,
 	nullptr,
 	UE_ARRAY_COUNT(DependentSingletons),
 	UE_ARRAY_COUNT(FuncInfo),
+	UE_ARRAY_COUNT(UHT_STATICS::PropPointers),
 	0,
-	0,
-	0x001000A0u,
+	0x009000A0u,
 	METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)
 };
 static void UVrLinkSubsystem_StaticRegisterNativesUVrLinkSubsystem()
@@ -897,17 +1347,18 @@ UVrLinkSubsystem::~UVrLinkSubsystem() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vbp3_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
 		{ Z_Construct_UEnum_VrLink_EVrLinkCalibrationPhase, TEXT("EVrLinkCalibrationPhase"), &ZRIE_EVrLinkCalibrationPhase, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 793333249U) },
+		{ Z_Construct_UEnum_VrLink_EVrLinkHeadbandState, TEXT("EVrLinkHeadbandState"), &ZRIE_EVrLinkHeadbandState, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 4279400891U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 1942252190U) },
+		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 4189745748U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vbp3_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_756e06eee9dd08f8fabaddf9d6a71a54c81e3037{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_7b4e36781d9336e44e88281cd12191a0fdba702c{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

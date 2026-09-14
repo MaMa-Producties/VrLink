@@ -18,6 +18,9 @@ namespace
 {
 	constexpr int32 KeyWarn = 8806;
 	constexpr uint64 KeyStatusLine = 8807;
+	/** Its own key so a refused baseline does not overwrite the status line,
+	  * and a second refusal replaces the first rather than stacking. */
+	constexpr int32 HeadbandMessageKey = 8808;
 	/** Mirrors ATCPSocket's default (TCPSocket.cpp:33). Shown, not used to bind.
 	  * If that default ever changes this line goes stale, which is why it says
 	  * where it came from. */
@@ -100,6 +103,7 @@ void UVrLinkSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	StatusTickHandle = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateWeakLambda(this, [this](float) -> bool
 		{
+			ExpireHeadbandIfStale();
 			ReportStatus();
 			return true;
 		}),
@@ -327,7 +331,129 @@ FString UVrLinkSubsystem::GetSessionId() const
 
 void UVrLinkSubsystem::StartBaseline(EVrLinkCalibrationPhase Phase)
 {
+	// Refused rather than sent while there is no headband on a head. This is the only
+	// call in the plugin that refuses on a condition the caller did not ask about, and
+	// it earns it: on 11 September a 507 second ride was recorded against no headband,
+	// producing a full gaze stream, a complete questionnaire, and an eeg.csv holding
+	// nothing but its header. Nobody knew for two days. The baseline is what every
+	// later value is measured against, so starting one here does not lose a baseline,
+	// it loses the ride.
+	//
+	// Loud on three channels, because a call that quietly does nothing is the same
+	// class of failure: the log for whoever is in the editor, the headset for whoever
+	// is wearing it, and the tablet for the operator, who is the only one of the three
+	// who can go and find a headband.
+	if (!bHeadbandReported)
+	{
+		// Allowed through, but never quietly. This is the 507 second ride's exact
+		// conditions minus the ability to detect them, so the one thing that must not
+		// happen is for it to look normal.
+		UE_LOG(LogTemp, Warning,
+			TEXT("[vrlink] Baseline starting UNVERIFIED: this tablet has never reported its ")
+			TEXT("headband, so there may be no EEG at all. Update the tablet app."));
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				HeadbandMessageKey, 8.0f, FColor::Orange,
+				TEXT("[VR Link] Baseline started without a headband check. Update the tablet app."));
+		}
+	}
+
+	if (!CanStartBaseline())
+	{
+		const FString Why = GetHeadbandMessage().ToString();
+		UE_LOG(LogTemp, Error,
+			TEXT("[vrlink] Start Baseline refused: %s Gate on Can Start Baseline and wait for On Headband State Changed."),
+			*Why);
+
+		if (UVrLinkComponent* Link = FindLink())
+		{
+			Link->SendError(FString::Printf(TEXT("baseline refused: %s"), *Why));
+		}
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				HeadbandMessageKey, 8.0f, FColor::Red,
+				FString::Printf(TEXT("[VR Link] Baseline refused. %s"), *Why));
+		}
+		return;
+	}
+
 	SendBaselinePhase(Phase, /*bStart=*/true);
+}
+
+FText UVrLinkSubsystem::GetHeadbandMessage() const
+{
+	switch (HeadbandState)
+	{
+	case EVrLinkHeadbandState::Absent:
+		return NSLOCTEXT("VrLink", "HeadbandAbsent",
+			"No headband connected. Please ask the assistant for help.");
+	case EVrLinkHeadbandState::OffHead:
+		return NSLOCTEXT("VrLink", "HeadbandOffHead",
+			"The headband is not on your head yet.");
+	case EVrLinkHeadbandState::Poor:
+		return NSLOCTEXT("VrLink", "HeadbandPoor",
+			"The headband needs adjusting. Please move it slightly on your forehead.");
+	case EVrLinkHeadbandState::Ready:
+	default:
+		// Empty is the signal to hide the message, so nothing has to know the states.
+		return FText::GetEmpty();
+	}
+}
+
+void UVrLinkSubsystem::ReportHeadband(const FString& StateWord)
+{
+	bHeadbandReported = true;
+	LastHeadbandAt = FPlatformTime::Seconds();
+
+	// Matched exactly, and an unrecognised word reads as Absent rather than as the
+	// nearest thing. A state this build has not heard of is a state it cannot reason
+	// about, and the safe reading of "I do not know" is "there is no headband".
+	EVrLinkHeadbandState Next = EVrLinkHeadbandState::Absent;
+	if (StateWord == TEXT("ready"))          { Next = EVrLinkHeadbandState::Ready;   }
+	else if (StateWord == TEXT("poor"))      { Next = EVrLinkHeadbandState::Poor;    }
+	else if (StateWord == TEXT("off-head"))  { Next = EVrLinkHeadbandState::OffHead; }
+	else if (StateWord != TEXT("absent"))
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[vrlink] Unknown headband state '%s'; reading it as absent."), *StateWord);
+	}
+
+	SetHeadbandState(Next);
+}
+
+void UVrLinkSubsystem::SetHeadbandState(EVrLinkHeadbandState Next)
+{
+	if (Next == HeadbandState)
+	{
+		return;   // the tablet repeats itself every ten seconds; only changes are news
+	}
+
+	HeadbandState = Next;
+	UE_LOG(LogTemp, Log, TEXT("[vrlink] Headband: %s"),
+		*UEnum::GetDisplayValueAsText(Next).ToString());
+	OnHeadbandStateChanged.Broadcast(Next);
+}
+
+void UVrLinkSubsystem::ExpireHeadbandIfStale()
+{
+	if (!bHeadbandReported || HeadbandState == EVrLinkHeadbandState::Absent)
+	{
+		return;   // never heard from, or already at the safe reading
+	}
+
+	// Two and a half heartbeats. One dropped message is not a disconnection; half a
+	// minute of silence is, and the point of the repeat is that this can tell them apart.
+	constexpr double StaleAfterSeconds = 25.0;
+	if (FPlatformTime::Seconds() - LastHeadbandAt > StaleAfterSeconds)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("[vrlink] No headband report for %.0f s; reading it as absent."), StaleAfterSeconds);
+		SetHeadbandState(EVrLinkHeadbandState::Absent);
+	}
 }
 
 void UVrLinkSubsystem::EndBaseline(EVrLinkCalibrationPhase Phase)

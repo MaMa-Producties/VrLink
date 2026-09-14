@@ -62,6 +62,36 @@ enum class EVrLinkCalibrationPhase : uint8
 	Stressed UMETA(DisplayName = "Stressed (upper pole)")
 };
 
+/**
+ * What the tablet's headband is doing, worst first.
+ *
+ * The order is the point: these compare, so "at least Poor" is a range rather
+ * than a list, and a state this build has never heard of cannot accidentally
+ * read as good.
+ *
+ * Absent is 0 deliberately. A host that has heard nothing, because the tablet
+ * is an older build or the link has gone quiet, holds this value, and silence
+ * is not evidence that a headband is on somebody's head.
+ */
+UENUM(BlueprintType)
+enum class EVrLinkHeadbandState : uint8
+{
+	/** Nothing connected. Nothing can be recorded. */
+	Absent UMETA(DisplayName = "Absent (nothing connected)"),
+
+	/** Connected, not being worn. */
+	OffHead UMETA(DisplayName = "Off head (not being worn)"),
+
+	/** Worn, but a sensor has lost contact. Usually wants reseating. */
+	Poor UMETA(DisplayName = "Poor contact"),
+
+	/** Worn, good contact. The only state a baseline should begin in. */
+	Ready UMETA(DisplayName = "Ready")
+};
+
+/** Fires whenever the headband state changes, including when it goes stale to Absent. */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVrLinkHeadbandChanged, EVrLinkHeadbandState, State);
+
 UCLASS(DisplayName = "VR Link")
 class VRLINK_API UVrLinkSubsystem : public UGameInstanceSubsystem
 {
@@ -147,6 +177,76 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category = "VR Link", meta = (DisplayName = "Set Pedalling"))
 	void SetPedalling(bool bTurning);
+	/**
+	 * Whether the participant is wearing a working headband right now.
+	 *
+	 * Absent until the tablet says otherwise. A tablet too old to send the
+	 * message, and a link that has gone quiet, both leave it here.
+	 */
+	UFUNCTION(BlueprintPure, Category = "VR Link|Headband", meta = (DisplayName = "Get Headband State"))
+	EVrLinkHeadbandState GetHeadbandState() const { return HeadbandState; }
+
+	/** Connected, worn, all four sensors in contact. */
+	UFUNCTION(BlueprintPure, Category = "VR Link|Headband", meta = (DisplayName = "Is Headband Ready"))
+	bool IsHeadbandReady() const { return HeadbandState == EVrLinkHeadbandState::Ready; }
+
+	/**
+	 * Whether this tablet reports its headband at all.
+	 *
+	 * False before the first report, and on any tablet build older than
+	 * 2026-09-14. It separates the two silences, which look identical from here
+	 * and are not the same fact: a tablet that cannot answer, and a tablet that
+	 * has stopped answering.
+	 */
+	UFUNCTION(BlueprintPure, Category = "VR Link|Headband", meta = (DisplayName = "Is Headband Known"))
+	bool IsHeadbandKnown() const { return bHeadbandReported; }
+
+	/**
+	 * Whether a baseline may begin. True from Poor upward.
+	 *
+	 * Poor is allowed on purpose. It means the band is on the head with one
+	 * sensor complaining, which is a recording worth having and often the best
+	 * a given head and a given band will do. Absent and Off head are not: there
+	 * is no EEG at all, and everything measured against that baseline, which is
+	 * the whole ride, is worthless.
+	 *
+	 * Also true on a tablet that has never reported at all, which is every build
+	 * before 2026-09-14. Refusing there would hold the baseline forever against a
+	 * tablet doing nothing wrong, and an experience that will not start is worse
+	 * on a test day than one that starts unverified. The refusal says so loudly
+	 * instead. Once a tablet has reported once, its silence is a disconnection
+	 * rather than a version, and it is read as Absent like any other.
+	 */
+	UFUNCTION(BlueprintPure, Category = "VR Link|Headband", meta = (DisplayName = "Can Start Baseline"))
+	bool CanStartBaseline() const
+	{
+		return !bHeadbandReported || HeadbandState >= EVrLinkHeadbandState::Poor;
+	}
+
+	/**
+	 * A line to show the participant, or empty when the headband is ready.
+	 *
+	 * Empty is the signal to hide the message, so a single Set Text and a
+	 * Set Visibility is the whole of it in Blueprint. The words are aimed at
+	 * whoever can act: the participant can seat a band, only the operator can
+	 * find one that is not there.
+	 */
+	UFUNCTION(BlueprintPure, Category = "VR Link|Headband", meta = (DisplayName = "Get Headband Message"))
+	FText GetHeadbandMessage() const;
+
+	/**
+	 * Fires on every change, so a widget can follow it rather than polling.
+	 *
+	 * It fires for a drop mid-ride too. Show it and keep going: stopping would
+	 * lose the gaze stream and the questionnaire as well, and whether to restart
+	 * is the operator's call rather than the experience's.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "VR Link|Headband", meta = (DisplayName = "On Headband State Changed"))
+	FVrLinkHeadbandChanged OnHeadbandStateChanged;
+
+	/** Called by the link when the tablet reports. Not for Blueprint. */
+	void ReportHeadband(const FString& StateWord);
+
 
 	/** Flags a moment of interest on the recording timeline. */
 	UFUNCTION(BlueprintCallable, Category = "VR Link")
@@ -186,6 +286,28 @@ public:
 	void SendBaselinePhase(EVrLinkCalibrationPhase Phase, bool bStart);
 
 private:
+
+	/** Whether this tablet has ever reported, which is how an old build is told from a quiet one. */
+	bool bHeadbandReported = false;
+
+	/** Last state the tablet reported, or Absent when it has not, or not lately. */
+	EVrLinkHeadbandState HeadbandState = EVrLinkHeadbandState::Absent;
+
+	/** When that arrived, in seconds since start. Negative means never. */
+	double LastHeadbandAt = -1.0;
+
+	/** Sets the state, fires the delegate on a change, and nothing on a repeat. */
+	void SetHeadbandState(EVrLinkHeadbandState Next);
+
+	/**
+	 * Drops the state back to Absent when the tablet has gone quiet.
+	 *
+	 * The tablet repeats itself every ten seconds whether or not anything has
+	 * changed, precisely so this is possible. Two and a half of those, so one
+	 * dropped message is not a false alarm and a real disconnection is caught
+	 * inside half a minute.
+	 */
+	void ExpireHeadbandIfStale();
 	/** The link being driven: the level's own if one exists, else the spawned one. */
 	UVrLinkComponent* FindLink() const;
 
