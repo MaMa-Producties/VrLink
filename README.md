@@ -9,7 +9,7 @@ else in your project changes.
 
 ## Requirements
 
-- **Unreal Engine 5.8** (branches for 5.6 and 5.7, see [Updates](#updates))
+- **Unreal Engine 5.8 or newer.** Nothing below 5.8 is supported.
 - A Windows PC on the same network as the tablet
 - No compiler and no C++ project. The plugin ships precompiled.
 
@@ -34,16 +34,13 @@ Visual Studio project files or convert the project to C++.
 
 The precompiled binary does not match your engine. Either:
 
-- **Wrong engine version.** Check out the matching branch:
-
-      git checkout ue5.6      # Unreal Engine 5.6
-      git checkout ue5.7      # Unreal Engine 5.7
-      git checkout master     # Unreal Engine 5.8
-
-  Same source on every branch, only the binary differs.
-- **A source build of the engine** rather than the launcher build. Binaries are
-  tied to an engine build ID. Tell us which engine you are on and we will build
-  against it.
+- **You are below 5.8.** Upgrade. The project standardised on 5.8 and nothing
+  older is supported.
+- **You are on a newer engine than the binary.** Tell us which, and we will
+  publish one built against it.
+- **You are on a source build** rather than the launcher build. Binaries are tied
+  to a specific engine build ID, so the two will not match even on the same
+  version number. Same answer: tell us and we will build against it.
 
 ## Usage
 
@@ -211,7 +208,7 @@ prefix. Nothing needs syncing during the session.
 | Stations cross-connecting | Set a matching pairing code on each tablet and its VR station |
 | `Start Baseline` does nothing | No headband is connected or it is not being worn. Check the log, the headset and the tablet: all three say so |
 | Headset says the baseline started without a check | The tablet app is older than 14 September 2026 and cannot report its headband. Update it |
-| Unreal wants to rebuild | See [If Unreal offers to rebuild the module](#if-unreal-offers-to-rebuild-the-module) |
+| Unreal wants to rebuild | Your engine is not 5.8, or is a source build. See [If Unreal offers to rebuild the module](#if-unreal-offers-to-rebuild-the-module) |
 
 ## What is in this repo
 
