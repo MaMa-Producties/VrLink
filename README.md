@@ -224,8 +224,6 @@ prefix. Nothing needs syncing during the session.
 
 Built by MaMa Producties for the UrbanSense study.
 
-Questions to Waleed.
-
 ## License
 
 No licence file is attached, so default copyright applies: all rights reserved.
