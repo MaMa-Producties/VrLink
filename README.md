@@ -170,6 +170,38 @@ There is no need to tag objects. The heat map uses the point in the world where
 the participant's view lands. When they look at the sky or an open street, that
 row has no position, which is normal.
 
+Without eye tracking, the recorder follows the direction of the **head**. With a
+headset that tracks the **eyes**, it follows the eyes instead, which is much more
+precise. It switches by itself: every row says which one it used, `head` or `eye`,
+in the `Source` column.
+
+### Eye tracking setup (HTC VIVE Focus Vision)
+
+Nothing changes in VR Link. The eye data only has to reach Unreal:
+
+1. **Headset:** Settings > Eye tracking. Turn it on and run the calibration.
+   Calibration is personal, so repeat it for each participant if there is time.
+2. **PC:** stream the headset with **VIVE Streaming** in **VIVE Hub**. Make VIVE
+   the active OpenXR runtime on the PC (not SteamVR), and switch on eye tracking
+   in VIVE Hub's streaming settings if it offers the option.
+3. **Unreal:** Edit > Plugins, enable **OpenXR** and **OpenXR Eye Tracker**, then
+   restart the editor.
+4. **Gaze Recorder:** leave **Prefer Eye Tracking** ticked (it is by default).
+
+### Check that it really works
+
+Do one test ride and check all four:
+
+| Check | Working | Not working |
+|---|---|---|
+| Message in the headset at the start | Green: *Eye tracking active* | Yellow: *No eye tracking* |
+| Tablet's `_events.csv` | `eyetracker:present` | `eyetracker:absent` |
+| `Source` column in `_gaze.csv` | Mostly `eye` (a few `head` rows during blinks are normal) | Only `head` |
+| Head still, look from a lamp post on the left to one on the right | `HitX/HitY/HitZ` jump between the two | They only change when you turn your head |
+
+The last check is the one that proves it. In Blueprint, **Is Using Eye Tracking**
+on the Gaze Recorder tells you the same thing live, for example to show a warning.
+
 ## Where the files are saved
 
 - The **tablet** saves the brain data, events, session details and answers.
