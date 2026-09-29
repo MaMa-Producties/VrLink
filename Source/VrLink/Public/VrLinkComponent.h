@@ -345,7 +345,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "VrLink")
 	FString GetSessionId() const { return SessionId; }
 
-	/** The study-day folder name the tablet minted, e.g. "Spaklerweg_2026-07-10". Empty outside a session. */
+	/** The study-day path the tablet minted, e.g. "Spaklerweg/Sessions/2026-10-28". Empty outside a session. */
 	UFUNCTION(BlueprintPure, Category = "VrLink")
 	FString GetSessionFolder() const { return SessionFolder; }
 

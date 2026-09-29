@@ -64,6 +64,29 @@ namespace
 		return Out.IsEmpty() ? TEXT("study") : Out;
 	}
 
+	/**
+	 * Sanitize() for a relative folder path: each part is cleaned on its own and the
+	 * slashes are kept, so the tablet's `Study/Sessions/2026-10-28` stays three folders
+	 * instead of collapsing into one `Study_Sessions_2026-10-28` beside the tablet's.
+	 * Empty, `.` and `..` parts are dropped, so the path can never climb out of the root.
+	 */
+	FString SanitizeFolderPath(const FString& Value)
+	{
+		TArray<FString> Parts;
+		Value.Replace(TEXT("\\"), TEXT("/")).ParseIntoArray(Parts, TEXT("/"), /*InCullEmpty=*/true);
+
+		FString Out;
+		for (const FString& Part : Parts)
+		{
+			if (Part == TEXT(".") || Part == TEXT(".."))
+			{
+				continue;
+			}
+			Out = Out.IsEmpty() ? Sanitize(Part) : Out + TEXT("/") + Sanitize(Part);
+		}
+		return Out.IsEmpty() ? TEXT("study") : Out;
+	}
+
 	/** Prints to the log and to the viewport, keyed so lines update instead of stacking. */
 	void Announce(const FColor& Colour, const FString& Message)
 	{
@@ -440,13 +463,13 @@ FString UGazeRecorder::ResolveSessionDirectory() const
 		const FString Experience = (VrLink && !VrLink->StudyConfig.Experience.IsEmpty())
 			? VrLink->StudyConfig.Experience
 			: TEXT("study");
-		Folder = FString::Printf(TEXT("%s_%s"), *Sanitize(Experience), *FDateTime::UtcNow().ToString(TEXT("%Y-%m-%d")));
+		Folder = FString::Printf(TEXT("%s/Sessions/%s"), *Sanitize(Experience), *FDateTime::UtcNow().ToString(TEXT("%Y-%m-%d")));
 
 		UE_LOG(LogGaze, Warning,
 			TEXT("The tablet sent no sessionFolder; falling back to '%s'. Check it matches the tablet's folder."), *Folder);
 	}
 
-	const FString Directory = FPaths::Combine(Root, Sanitize(Folder));
+	const FString Directory = FPaths::Combine(Root, SanitizeFolderPath(Folder));
 	IFileManager& Files = IFileManager::Get();
 	if (!Files.DirectoryExists(*Directory) && !Files.MakeDirectory(*Directory, /*Tree=*/true))
 	{

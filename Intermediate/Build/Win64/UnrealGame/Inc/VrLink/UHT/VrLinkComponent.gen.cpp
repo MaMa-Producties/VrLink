@@ -996,9 +996,9 @@ struct UHT_STATICS
 #if WITH_METADATA
 	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
 		{ "Category", "VrLink" },
-		{ "Comment", "/** The study-day folder name the tablet minted, e.g. \"Spaklerweg_2026-07-10\". Empty outside a session. */" },
+		{ "Comment", "/** The study-day path the tablet minted, e.g. \"Spaklerweg/Sessions/2026-10-28\". Empty outside a session. */" },
 		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
-		{ "ToolTip", "The study-day folder name the tablet minted, e.g. \"Spaklerweg_2026-07-10\". Empty outside a session." },
+		{ "ToolTip", "The study-day path the tablet minted, e.g. \"Spaklerweg/Sessions/2026-10-28\". Empty outside a session." },
 	};
 #endif // WITH_METADATA
 
@@ -1800,7 +1800,7 @@ struct UHT_STATICS
 		{ &Z_Construct_UFunction_UVrLinkComponent_GetCurrentScene, "GetCurrentScene" }, // 8ce66cca549ae40f30f90fc87142384435a1eca3
 		{ &Z_Construct_UFunction_UVrLinkComponent_GetCurrentStepIndex, "GetCurrentStepIndex" }, // 2fbf1d6a47f49597d21e4e70256d3ce93d5241df
 		{ &Z_Construct_UFunction_UVrLinkComponent_GetSessionElapsedSeconds, "GetSessionElapsedSeconds" }, // bb53422c36bd4820a263f15bc43a3e610683ac4f
-		{ &Z_Construct_UFunction_UVrLinkComponent_GetSessionFolder, "GetSessionFolder" }, // ddcaa66034769941452f313e274d367e31ec141a
+		{ &Z_Construct_UFunction_UVrLinkComponent_GetSessionFolder, "GetSessionFolder" }, // b0996694b182adde1a3634cdf8ea4e3ac9045f63
 		{ &Z_Construct_UFunction_UVrLinkComponent_GetSessionId, "GetSessionId" }, // 42f363c3661905a7b0fd9d676d48392759ca3aab
 		{ &Z_Construct_UFunction_UVrLinkComponent_GoToNextStep, "GoToNextStep" }, // 6de83ce8a0dd4f5158a3d852aa7ae13ad8851902
 		{ &Z_Construct_UFunction_UVrLinkComponent_HandleLine, "HandleLine" }, // f3cee7b055480e3be68d78d2b5f321167414dec1
@@ -1921,7 +1921,7 @@ UVrLinkComponent::~UVrLinkComponent() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
@@ -1935,10 +1935,10 @@ struct UHT_STATICS
 		{ Z_Construct_UScriptStruct_FVrLinkStudyConfig, Z_Construct_UScriptStruct_FVrLinkStudyConfig_Statics::NewStructOps, TEXT("VrLinkStudyConfig"),&Z_Registration_Info_UScriptStruct_FVrLinkStudyConfig, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FVrLinkStudyConfig), 2557101169U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 2342431322U) },
+		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 2698031028U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_b6b6814c1b25b37a67da3479e6d60c309b956aeb{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_104d1b038931f745fc389e0fd63f54a1e50fd132{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	UHT_STATICS::ScriptStructInfo, UE_ARRAY_COUNT(UHT_STATICS::ScriptStructInfo),

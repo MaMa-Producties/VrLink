@@ -25,8 +25,8 @@ class UVrLinkComponent;
  *  - recording ends                  -> the file is flushed and closed
  *
  * The file goes in `Documents/MuseEEG/{sessionFolder}/`, where `sessionFolder` is
- * the study-day folder name the tablet sends in the handshake. Copy the tablet's
- * folder of the same name over this one and all four files of a session sit
+ * the study-day path the tablet sends in the handshake, `{Study}/Sessions/{date}`.
+ * Copy the tablet's folder of the same name over this one and all four files of a session sit
  * together, sharing the `{SessionId}_` prefix the analysis tool groups by.
  *
  * What the analysis actually uses: `HitX/HitY/HitZ`, the world point the ray

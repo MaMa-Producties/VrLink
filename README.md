@@ -194,7 +194,9 @@ columns are blank. The row is still real, it just has no position.
 ## Where the files land
 
 The tablet writes `{SessionId}_eeg.csv`, `_events.csv` and `_session.csv`. The PC
-writes `{SessionId}_gaze.csv`, into `Documents/MuseEEG/{sessionFolder}/`.
+writes `{SessionId}_gaze.csv`, into `Documents/MuseEEG/{sessionFolder}/`. The tablet
+sends `sessionFolder` as `{Study}/Sessions/{date}`, so on the PC that is
+`Documents/MuseEEG/{Study}/Sessions/{date}/`, the same place as on the tablet.
 
 Two machines, so the files are paired afterwards by the shared `SessionId`
 prefix. Nothing needs syncing during the session.
