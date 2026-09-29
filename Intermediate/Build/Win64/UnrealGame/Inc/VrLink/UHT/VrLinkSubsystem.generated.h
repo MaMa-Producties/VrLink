@@ -21,7 +21,7 @@ enum class EVrLinkCalibrationPhase : uint8;
 enum class EVrLinkHeadbandState : uint8;
 
 // ********** Begin Class UVrLinkSubsystem *********************************************************
-#define FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_RPC_WRAPPERS_NO_PURE_DECLS \
+#define FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_RPC_WRAPPERS_NO_PURE_DECLS \
 	DECLARE_FUNCTION(execEndBaseline); \
 	DECLARE_FUNCTION(execStartBaseline); \
 	DECLARE_FUNCTION(execGetSessionId); \
@@ -44,7 +44,7 @@ enum class EVrLinkHeadbandState : uint8;
 struct Z_Construct_UClass_UVrLinkSubsystem_Statics;
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase);
 
-#define FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_INCLASS_NO_PURE_DECLS \
+#define FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_INCLASS_NO_PURE_DECLS \
 private: \
 	friend struct ::Z_Construct_UClass_UVrLinkSubsystem_Statics; \
 	friend VRLINK_API UClass* ::Z_Construct_UClass_UVrLinkSubsystem(ETypeConstructPhase); \
@@ -53,7 +53,7 @@ public: \
 	DECLARE_SERIALIZER(UVrLinkSubsystem)
 
 
-#define FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_ENHANCED_CONSTRUCTORS \
+#define FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_ENHANCED_CONSTRUCTORS \
 	/** Standard constructor, called after all reflected properties have been initialized */ \
 	NO_API UVrLinkSubsystem(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get()); \
 	/** Deleted move- and copy-constructors, should never be used */ \
@@ -65,13 +65,13 @@ public: \
 	NO_API virtual ~UVrLinkSubsystem();
 
 
-#define FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_95_PROLOG
-#define FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_GENERATED_BODY \
+#define FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_95_PROLOG
+#define FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_GENERATED_BODY \
 PRAGMA_DISABLE_DEPRECATION_WARNINGS \
 public: \
-	FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_RPC_WRAPPERS_NO_PURE_DECLS \
-	FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_INCLASS_NO_PURE_DECLS \
-	FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_ENHANCED_CONSTRUCTORS \
+	FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_RPC_WRAPPERS_NO_PURE_DECLS \
+	FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_INCLASS_NO_PURE_DECLS \
+	FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h_98_ENHANCED_CONSTRUCTORS \
 private: \
 PRAGMA_ENABLE_DEPRECATION_WARNINGS
 
@@ -81,7 +81,7 @@ class UVrLinkSubsystem;
 // ********** End Class UVrLinkSubsystem ***********************************************************
 
 #undef CURRENT_FILE_ID
-#define CURRENT_FILE_ID FID_vbh2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h
+#define CURRENT_FILE_ID FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h
 
 // ********** Begin Enum EVrLinkCalibrationPhase ***************************************************
 #define FOREACH_ENUM_EVRLINKCALIBRATIONPHASE(op) \
