@@ -1,230 +1,212 @@
 # VR Link
 
-An Unreal plugin that connects a VR experience to the Neural Recorder tablet, the
-Muse EEG app used in the UrbanSense study.
+VR Link connects your Unreal VR experience to the **Neural Recorder**, the tablet
+app that records the participant's brain activity (EEG) during the UrbanSense
+study.
 
-It handles the network link, the session lifecycle, scene and scenario events,
-the bike pedal state, and gaze recording. You call it from Blueprint. Nothing
-else in your project changes.
+Your experience tells the tablet what is happening: the ride starts, the
+participant enters a location, a design appears. The tablet records the brain
+data with those moments marked, so the analysis knows which design caused which
+reaction.
 
-## Requirements
+You use it from Blueprint. You do not need C++ or a compiler.
 
-- **Unreal Engine 5.8 or newer.** Nothing below 5.8 is supported.
-- A Windows PC on the same network as the tablet
-- No compiler and no C++ project. The plugin ships precompiled.
+## What you need
 
-Stock engine modules only: `Core`, `CoreUObject`, `Engine`, `InputCore`,
-`Networking`, `Sockets`, `Json`.
+- **Unreal Engine 5.8 or newer**, the normal launcher version.
+- A Windows PC on the **same network** (Wi-Fi or cable) as the tablet.
 
 ## Install
 
-1. Copy the `VrLink` folder into your project's `Plugins/` folder, so you have
-   `YourProject/Plugins/VrLink/VrLink.uplugin`. Create `Plugins/` if it is not
-   there.
-2. Open the project.
+1. Copy the `VrLink` folder into the `Plugins` folder of your project, so this
+   file exists: `YourProject/Plugins/VrLink/VrLink.uplugin`.
+   No `Plugins` folder yet? Create it.
+2. Open the project. The plugin is switched on automatically.
 
-That is the whole install. The plugin is enabled by default. Do **not** generate
-Visual Studio project files or convert the project to C++.
+That is all. Do **not** convert the project to C++ and do **not** generate Visual
+Studio files.
 
-### Updates
+**To update:** close Unreal, replace the `VrLink` folder with the newest version
+from the `master` branch, and open the project again.
 
-`git pull` in the `VrLink` folder, then restart the editor. Releases are tagged.
+**Unreal asks to rebuild the plugin?** Your engine does not match the plugin.
+Use Unreal 5.8 from the Epic launcher. On a newer version or a source build, ask
+us for a matching plugin.
 
-### If Unreal offers to rebuild the module
+## The nodes
 
-The precompiled binary does not match your engine. Either:
+All nodes are on the **VrLink Subsystem**. In any Blueprint, right-click and
+type the node name. There is nothing to place in the level.
 
-- **You are below 5.8.** Upgrade. The project standardised on 5.8 and nothing
-  older is supported.
-- **You are on a newer engine than the binary.** Tell us which, and we will
-  publish one built against it.
-- **You are on a source build** rather than the launcher build. Binaries are tied
-  to a specific engine build ID, so the two will not match even on the same
-  version number. Same answer: tell us and we will build against it.
-
-## Usage
-
-Every node is on the **VrLink Subsystem**. Drag off in any Blueprint and search
-the node name. No actor to place, no reference to wire.
-
-| Node | When to call it | What it does |
+| Node | Call it when | What it tells the tablet |
 |---|---|---|
-| `Initialize Vr Link` | Once, on level start | Names the project, finds the tablet |
-| `Start Session` | The ride begins | Tells the tablet to start recording |
-| `Start Baseline` / `End Baseline` | **Required**, before the ride | Opens and closes a calibration phase |
-| `Set Location` | Entering an area | **Where** the participant is |
-| `Start Scenario` / `End Scenario` | A design goes on and off display | **Which design** is showing |
-| `Set Pedalling` | Whenever the bike sensor changes | Whether the pedals are turning |
-| `Can Start Baseline` | Before `Start Baseline` | False while no headband is on a head |
-| `Get Headband Message` | While showing the message | The line to display, empty when ready |
-| `On Headband State Changed` | Bind once, on level start | Fires whenever the headband state changes |
-| `Send Mark` | Anything worth flagging | A timestamped note |
-| `End Session` | The ride finishes | Stops the recording cleanly |
-| `Is Session Active` | Any time | True while recording |
+| `Initialize Vr Link` | Once, when the level starts | The project name. The PC then waits for the tablet to connect. |
+| `Start Session` | The participant is ready to begin | Start recording. |
+| `Set Pedalling` | The bike sensor changes (or every tick) | Whether the pedals are turning. |
+| `Can Start Baseline` | Before the baseline | True only when the headband is worn and working. |
+| `Get Headband Message` | While waiting for the headband | A line of text to show the participant. Empty when all is fine. |
+| `On Headband State Changed` | Bind once, when the level starts | Fires when the headband connects, drops out or comes back. |
+| `Start Baseline` / `End Baseline` | The calibration forest | Start and end of a calibration phase (Relaxed or Stressed). |
+| `Set Location` | The participant enters a place | **Where** they are. |
+| `Start Scenario` | A design becomes visible | **Which design** they see. |
+| `End Scenario` | That design is no longer visible | Ignore everything until the next design. |
+| `Send Mark` | Something worth noting happens | A note with a time stamp, for example `oncoming:start`. |
+| `End Session` | The ride is over | Stop recording, and why (see below). |
+| `Is Session Active` | Any time | True while the tablet is recording. |
 
-### A whole run
+## A whole ride, step by step
 
 ```
+Initialize Vr Link   "Olifantenpad"
 Start Session
-Set Pedalling   (whatever the pedals are doing right now)
+Set Pedalling        (what the pedals are doing right now)
 
-wait until      Can Start Baseline
+wait until Can Start Baseline is true
 
-Start Baseline  (Relaxed)    ...   End Baseline (Relaxed)
-Start Baseline  (Stressed)   ...   End Baseline (Stressed)
+Start Baseline (Relaxed)   ... calm forest ...    End Baseline (Relaxed)
+Start Baseline (Stressed)  ... scary forest ...   End Baseline (Stressed)
 
-Set Location    "Spaklerweg north"
-Start Scenario  "Green facade"    ...   End Scenario
-Start Scenario  "Grey facade"     ...   End Scenario
+Set Location    "Fietspad S111 - Holterbergweg/Arena"
+Start Scenario  "Groen impact"        ... ride ...   End Scenario
+Start Scenario  "Huidige situatie"    ... ride ...   End Scenario
+   (all five designs, in a random order)
 
-Set Location    "Menadostraat"
-Start Scenario  "Blue lights"     ...   End Scenario
-Start Scenario  "Grey facade"     ...   End Scenario
+Set Location    "Onderdoorgang A10 - Spaklerweg"
+Start Scenario  "Visueel comfort"     ... ride ...   End Scenario
+   (all five designs, in a random order)
 
-End Session
+End Session     "complete"
 ```
 
-## The six rules
+## Rules
 
-These are the ones that cost a session if they are missed. None of them raise an
-error: the recording is written, looks normal, and is wrong at analysis time.
+Breaking one of these gives **no error message**. The recording looks fine, but
+the results are wrong. That is why they matter.
 
-### 1. Do not start the baseline until the headband is on
+### 1. Wait for the headband before the baseline
 
-The tablet records EEG from a headband the participant wears. If it is not on, or
-not connected, the ride still runs perfectly and records no brain data at all.
+If the headband is not on the head, the ride still works but **no brain data is
+recorded**. Only start the baseline when `Can Start Baseline` is true. Until
+then, show `Get Headband Message` in the headset so the participant knows why
+nothing happens.
 
-That happened on 11 September: a 507 second ride, a full gaze stream, a complete
-questionnaire, and an EEG file containing only its header. Nobody knew for two
-days.
+If the headband drops out during the ride: show the message and **keep going**.
+Do not end the session. The operator on the tablet decides whether to stop.
 
-Gate your baseline on **Can Start Baseline**, and show **Get Headband Message**
-while it is not empty:
-
-```
-On level start
-    -> bind On Headband State Changed
-    -> show Get Headband Message, hide it when empty
-
-Before Start Baseline
-    -> Branch on Can Start Baseline
-       true  -> Start Baseline
-       false -> wait, keep the message on screen
-```
-
-`Start Baseline` refuses on its own if you forget, and says so in the log, in the
-headset and on the tablet. Do not rely on that: a refused baseline means the
-participant is sitting in a VR experience that is not going anywhere, and only
-your own screen can tell them why.
-
-**If it drops out mid-ride, show it and carry on.** Do not end the session.
-Stopping would lose the gaze and the questionnaire as well, and whether to
-restart is the operator's call, not the experience's.
-
-### 2. `Set Location` and `Start Scenario` are not interchangeable
-
-- `Set Location` is *where they are*: "Spaklerweg north".
-- `Start Scenario` is *which design they see*: "Green facade".
-
-The analysis compares designs **within** a location. Send a design as a location
-and the report compares two streets instead of two designs.
-
-### 3. Call `End Scenario` every time a design stops showing
-
-Even when the next one follows immediately. Everything between `End Scenario` and
-the next `Start Scenario` or `Set Location` is discarded: transitions, corridors,
-fades. Left unmarked, that stretch is credited to the design that just ended,
-for gaze as well as EEG.
-
-### 4. Run the baseline as two phases, relaxed first
+### 2. Always do both baseline phases, Relaxed first
 
 ```
-Start Baseline (Relaxed)     <- calibration begins
+Start Baseline (Relaxed)
 End Baseline   (Relaxed)
 Start Baseline (Stressed)
-End Baseline   (Stressed)    <- ride can start
+End Baseline   (Stressed)
 ```
 
-- **Relaxed** is the reference. Every later value is a difference from it.
-- **Stressed** is the only source of `BaselineMin_/BaselineMax_`, which is how a
-  quiet participant's real reaction is told from background noise. Skip it and a
-  muted responder reads as "no reaction to anything".
+The Relaxed phase is the participant's calm starting point. The Stressed phase
+shows how strongly this person can react. Without both, every result is measured
+against nothing. The tablet cannot do this for you: if the experience does not
+call these nodes, there is no baseline.
 
-**Order matters.** The recorder closes the calibration window at the first exit
-from a rest phase.
+### 3. A location is a place, a scenario is a design
 
-**The VR side has to drive this.** The tablet times how long calibration runs but
-has no stressed phase of its own. If the experience does not declare it, it never
-happens.
+- `Set Location` = **where**: "Onderdoorgang A10 - Spaklerweg".
+- `Start Scenario` = **which design**: "Groen impact".
 
-### 5. Call `Set Pedalling` once right after `Start Session`
+The analysis compares designs **within one place**. Send a design as a location
+and it compares the wrong things.
 
-Whatever the pedals are doing, even standing still.
+### 4. Call `End Scenario` every time a design disappears
 
-Wire the bike sensor's boolean straight in and call it every tick if that is
-easiest. The plugin drops repeats, so only the changes reach the file, as a
-start and a stop row. From those the analysis gets every stretch of movement,
-and the tablet gets a running total of seconds spent pedalling.
+Also when the next design follows straight away. Everything between
+`End Scenario` and the next `Start Scenario` (fades, loading, corridors) is
+ignored by the analysis. If you forget it, those seconds count as reactions to
+the design that just ended.
 
-Without an opening call there are no pedal marks at all, and a file with none
-could be a build that never reported or a participant who never moved. The
-analysis will not guess between those, so it reports "unknown" for the whole
-ride. The calibration has to be at rest to be a rest reference, and this is the
-only thing that can say whether it was.
+### 5. Use exactly the same names every time
 
-### 6. One session per ride, not per trigger
+`"Groen impact"`, `"Groen Impact"` and `"Groen impact "` (with a space at the end)
+are **three different designs** to the analysis. Copy the names from one agreed
+list and never type them by hand in more than one place.
 
-`Start Session` once when they set off, `End Session` once when they finish. Use
-`Set Location` and `Start Scenario` on your trigger volumes in between.
+### 6. Shuffle the designs yourself
 
-Each session needs its own calibration and prompts its own questionnaire, so ten
-sessions per participant means ten questionnaires and ten fragments that cannot
-be compared.
+The study needs the five designs of a location in a **different random order for
+each participant**. VR Link does not do this for you. Keep the locations in the
+same order; shuffle only the designs inside each location. The tablet reads the
+order from your `Start Scenario` calls, so it needs nothing else.
 
-## Gaze recording (optional)
+### 7. Call `Set Pedalling` right after `Start Session`
 
-Add the **Gaze Recorder** component to your VR pawn. It writes
-`{SessionId}_gaze.csv` and follows the session on its own, so there is nothing to
-call.
+Even if the participant is standing still. After that, call it whenever the bike
+sensor changes (every tick is fine, repeats are ignored). Without that first call
+the analysis cannot tell "not pedalling" from "sensor not connected".
 
-**No tagging needed.** The heat map is built from the world position the gaze ray
-lands on. When the ray hits nothing, sky or an open street, the `HitX/HitY/HitZ`
-columns are blank. The row is still real, it just has no position.
+### 8. One session per participant
 
-## Where the files land
+Call `Start Session` once at the beginning and `End Session` once at the end.
+Never start a new session per location or per design: each session asks the
+participant a full questionnaire.
 
-The tablet writes `{SessionId}_eeg.csv`, `_events.csv` and `_session.csv`. The PC
-writes `{SessionId}_gaze.csv`, into `Documents/MuseEEG/{sessionFolder}/`. The tablet
-sends `sessionFolder` as `{Study}/Sessions/{date}`, so on the PC that is
-`Documents/MuseEEG/{Study}/Sessions/{date}/`, the same place as on the tablet.
+## Ending a session: which reason
 
-Two machines, so the files are paired afterwards by the shared `SessionId`
-prefix. Nothing needs syncing during the session.
+| Reason | Use it when |
+|---|---|
+| `complete` | The ride ran to the end. This is the default. |
+| `interrupted` | The ride stopped early, for example the participant felt sick. |
+| `emergency-stop` | The ride had to stop immediately. |
+
+The tablet saves the reason. Anything other than `complete` tells the analysis
+the ride is not a full measurement.
+
+If the VR app is simply closed, **no reason is sent** and the tablet only sees
+the connection drop. Always end with `End Session` when you can.
+
+## Gaze recording (where people look)
+
+Add the **Gaze Recorder** component to your VR pawn. That is all: it starts and
+stops with the session by itself and writes `{SessionId}_gaze.csv`.
+
+There is no need to tag objects. The heat map uses the point in the world where
+the participant's view lands. When they look at the sky or an open street, that
+row has no position, which is normal.
+
+## Where the files are saved
+
+- The **tablet** saves the brain data, events, session details and answers.
+- The **VR PC** saves the gaze file in `Documents/MuseEEG/{Study}/Sessions/{date}/`,
+  the same folder name as on the tablet.
+
+Afterwards, copy the PC's files next to the tablet's. Files of one session start
+with the same `SessionId`, so they find each other.
+
+## Two bikes in one building
+
+With two setups on the same network, a tablet can connect to the **wrong** VR PC.
+To prevent it:
+
+1. Give each VR PC a fixed IP address on the router.
+2. On each tablet, in Settings, **turn off automatic discovery** and enter the IP
+   address of its own VR PC.
 
 ## Troubleshooting
 
-| Symptom | Cause |
+| Problem | What to check |
 |---|---|
-| No connection | Tablet and PC must share a network. Discovery is UDP broadcast on port 47800, the link is TCP on 3030 |
-| `Is Session Active` false after `Start Session` | The handshake did not complete, usually a dismissed firewall prompt on the PC |
-| Stations cross-connecting | Set a matching pairing code on each tablet and its VR station |
-| `Start Baseline` does nothing | No headband is connected or it is not being worn. Check the log, the headset and the tablet: all three say so |
-| Headset says the baseline started without a check | The tablet app is older than 14 September 2026 and cannot report its headband. Update it |
-| Unreal wants to rebuild | Your engine is not 5.8, or is a source build. See [If Unreal offers to rebuild the module](#if-unreal-offers-to-rebuild-the-module) |
+| The tablet does not connect | Same network? Windows firewall: allow Unreal when it asks. The connection uses TCP port 3030. |
+| `Is Session Active` stays false after `Start Session` | The tablet is not connected yet. See the line above. |
+| A tablet connects to the wrong bike | See "Two bikes in one building". |
+| `Start Baseline` does nothing | The headband is not worn or not connected. The log, the headset and the tablet all say which. |
+| Unreal asks to rebuild the plugin | Wrong engine version. See Install. |
 
-## What is in this repo
+## What is in this folder
 
-| Folder | Why it is here |
+| Folder | What it is |
 |---|---|
-| `Source/` | Plugin source, for reference and for rebuilding |
-| `Binaries/Win64/` | The precompiled editor DLL |
-| `Intermediate/Build/` | Precompiled Game objects. **These are what let a Blueprint-only project package a build.** Do not delete them |
+| `Source/` | The plugin's source code, for reference. |
+| `Binaries/Win64/` | The ready-built plugin for the editor. |
+| `Intermediate/Build/` | Ready-built parts needed to **package** your game. Do not delete. |
 
-## Credits
+## Credits and licence
 
-Built by MaMa Producties for the UrbanSense study.
-
-## License
-
-No licence file is attached, so default copyright applies: all rights reserved.
-Ask MaMa Producties before using this outside the UrbanSense project.
+Built by MaMa Producties for the UrbanSense study. All rights reserved: ask
+MaMa Producties before using it outside the UrbanSense project.
