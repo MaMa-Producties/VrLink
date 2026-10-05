@@ -397,14 +397,14 @@ UGazeRecorder::~UGazeRecorder() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vlpkg2_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
 		{ Z_Construct_UClass_UGazeRecorder, TEXT("UGazeRecorder"), &Z_Registration_Info_UClass_UGazeRecorder, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UGazeRecorder), 1277128255U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_671792a832fbb56c6c246b72df042296e2c15b1c{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlpkg2_HostProject_Plugins_VrLink_Source_VrLink_Public_GazeRecorder_h__Script_VrLink_671792a832fbb56c6c246b72df042296e2c15b1c{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

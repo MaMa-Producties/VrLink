@@ -92,6 +92,7 @@ void UVrLinkComponent::BeginPlay()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("[vrlink] No ATCPSocket found; inbound messages will not be handled."));
 	}
+	TabletLostHandle = NetworkManager::GetInstance().OnClientDisconnected.AddUObject(this, &UVrLinkComponent::OnTabletLost);
 
 	SetComponentTickEnabled(AdvanceMode == EStepAdvanceMode::Manual);
 
@@ -439,6 +440,7 @@ void UVrLinkComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		Socket->OnMessageReceived.RemoveDynamic(this, &UVrLinkComponent::HandleLine);
 	}
+	NetworkManager::GetInstance().OnClientDisconnected.Remove(TabletLostHandle);
 
 	if (StartTrigger)
 	{
@@ -628,6 +630,12 @@ void UVrLinkComponent::HandleHello(const TSharedPtr<FJsonObject>& Msg)
 
 	Welcome->SetNumberField(TEXT("tServer"), SessionElapsedSeconds());
 
+	// Whether a ride is running and whose. A tablet reconnecting into its own session
+	// rejoins it; a tablet that finds someone else's steps aside. The id is empty for a
+	// session the VR started while no tablet was linked: the tablet joining it mints one.
+	Welcome->SetBoolField(TEXT("sessionActive"), bSessionActive);
+	Welcome->SetStringField(TEXT("sessionId"), bSessionActive ? SessionId : FString());
+
 	SendJson(Welcome);
 	bHandshakeComplete = true;
 }
@@ -657,6 +665,7 @@ void UVrLinkComponent::HandleSessionStart(const TSharedPtr<FJsonObject>& Msg)
 		MuseId = IncomingMuse;
 	}
 	Msg->TryGetStringField(TEXT("participantId"), ParticipantId);
+	PublishSession();
 
 	const TSharedRef<FJsonObject> Started = MakeShared<FJsonObject>();
 	Started->SetStringField(TEXT("type"), TEXT("session.started"));
@@ -692,6 +701,7 @@ void UVrLinkComponent::HandleSessionStarted(const TSharedPtr<FJsonObject>& Msg)
 	}
 	Msg->TryGetStringField(TEXT("participantId"), ParticipantId);
 
+	PublishSession();
 	UE_LOG(LogTemp, Log, TEXT("[vrlink] Session started (VR-initiated), adopted id: %s"), *SessionId);
 
 	// Same Blueprint signal as the tablet-initiated path: the recording is now live.
@@ -702,6 +712,7 @@ void UVrLinkComponent::HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg)
 {
 	// Unity-initiated end (spec §4 stop): Unity owns the event log, so just reply session.saved.
 	bSessionActive = false;
+	PublishSession();
 
 	const TSharedRef<FJsonObject> Saved = MakeShared<FJsonObject>();
 	Saved->SetStringField(TEXT("type"), TEXT("session.saved"));
@@ -716,15 +727,19 @@ void UVrLinkComponent::HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg)
 
 void UVrLinkComponent::StartSession()
 {
-	if (!bHandshakeComplete)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("[vrlink] StartSession before handshake; ignored."));
-		return;
-	}
-
 	// VR-initiated (spec §4 case B): start our clock and send a null sessionId; Unity mints it.
 	BeginSessionClock(NowIso());
 	SessionId.Reset();
+	PublishSession();
+
+	// No tablet linked right now (between rides, or a dropped link). The ride still
+	// starts, and the next tablet to connect is told so in its `welcome` and joins it.
+	// This used to be refused, so a ride begun while the link was down was never recorded.
+	if (!bHandshakeComplete)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[vrlink] Session started with no tablet linked; the next tablet joins it."));
+		return;
+	}
 
 	const TSharedRef<FJsonObject> Start = MakeEvent(TEXT("session.start"), SessionElapsedSeconds(), NowIso());
 	Start->SetField(TEXT("sessionId"), MakeShared<FJsonValueNull>());
@@ -742,6 +757,7 @@ void UVrLinkComponent::EndSession(const FString& Reason)
 	const double EndT = SessionElapsedSeconds();
 	const FString EndWall = NowIso();
 	bSessionActive = false;
+	PublishSession();
 
 	// VR-initiated end (spec §4 stop): notify Unity (Unity owns the event log).
 	const TSharedRef<FJsonObject> End = MakeEvent(TEXT("session.end"), EndT, EndWall);
@@ -883,6 +899,26 @@ void UVrLinkComponent::RestoreSession(const FVrLinkCarriedSession& Carried)
 	// ones recorded before the level changed. Resetting it here would silently rewind
 	// Time to zero partway through a recording.
 	SessionStartSeconds = Carried.StartSeconds;
+	PublishSession();
+}
+
+void UVrLinkComponent::PublishSession() const
+{
+	NetworkManager::GetInstance().SetActiveSession(bSessionActive, SessionId);
+}
+
+void UVrLinkComponent::OnTabletLost()
+{
+	// Only the link resets. The handshake stayed true after a drop, so the next tablet's
+	// traffic was treated as coming from one already welcomed, and a VR-side start sent
+	// its `session.start` into a socket that no longer existed. The session is left
+	// alone on purpose: a tablet that lost Wi-Fi mid-ride reconnects into it, and the
+	// `welcome` it gets then says the ride is still running.
+	bHandshakeComplete = false;
+	if (bSessionActive)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[vrlink] Tablet disconnected mid-session %s; the ride carries on."), *SessionId);
+	}
 }
 
 double UVrLinkComponent::SessionElapsedSeconds() const

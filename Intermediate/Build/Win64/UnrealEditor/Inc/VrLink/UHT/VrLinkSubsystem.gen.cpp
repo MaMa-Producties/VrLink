@@ -861,6 +861,46 @@ DEFINE_FUNCTION(UVrLinkSubsystem::execIsSessionActive)
 }
 // ********** End Class UVrLinkSubsystem Function IsSessionActive **********************************
 
+// ********** Begin Class UVrLinkSubsystem Function ReleaseTablet **********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkSubsystem_ReleaseTablet_Statics
+struct UHT_STATICS
+{
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VR Link" },
+		{ "Comment", "/**\n\x09 * Frees this PC for the next tablet by dropping the one connected. For a tablet that\n\x09 * crashed or lost Wi-Fi between rides and so never let go. A running ride carries on,\n\x09 * and its own tablet can reconnect into it.\n\x09 */" },
+		{ "ModuleRelativePath", "Public/VrLinkSubsystem.h" },
+		{ "ToolTip", "Frees this PC for the next tablet by dropping the one connected. For a tablet that\ncrashed or lost Wi-Fi between rides and so never let go. A running ride carries on,\nand its own tablet can reconnect into it." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function ReleaseTablet constinit property declarations *************************
+// ********** End Function ReleaseTablet constinit property declarations ***************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkSubsystem, nullptr, "ReleaseTablet", nullptr, 0, 0, RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x04020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+UFunction* Z_Construct_UFunction_UVrLinkSubsystem_ReleaseTablet(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkSubsystem::execReleaseTablet)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	P_THIS->ReleaseTablet();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkSubsystem Function ReleaseTablet ************************************
+
 // ********** Begin Class UVrLinkSubsystem Function SendMark ***************************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -1238,6 +1278,7 @@ struct UHT_STATICS
 		{ .NameUTF8 = UTF8TEXT("IsHeadbandKnown"), .Pointer = &UVrLinkSubsystem::execIsHeadbandKnown },
 		{ .NameUTF8 = UTF8TEXT("IsHeadbandReady"), .Pointer = &UVrLinkSubsystem::execIsHeadbandReady },
 		{ .NameUTF8 = UTF8TEXT("IsSessionActive"), .Pointer = &UVrLinkSubsystem::execIsSessionActive },
+		{ .NameUTF8 = UTF8TEXT("ReleaseTablet"), .Pointer = &UVrLinkSubsystem::execReleaseTablet },
 		{ .NameUTF8 = UTF8TEXT("SendMark"), .Pointer = &UVrLinkSubsystem::execSendMark },
 		{ .NameUTF8 = UTF8TEXT("SetLocation"), .Pointer = &UVrLinkSubsystem::execSetLocation },
 		{ .NameUTF8 = UTF8TEXT("SetPedalling"), .Pointer = &UVrLinkSubsystem::execSetPedalling },
@@ -1258,6 +1299,7 @@ struct UHT_STATICS
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandKnown, "IsHeadbandKnown" }, // 80510c1ad8e0344c9d3054f52fd00bb5a24aadd0
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsHeadbandReady, "IsHeadbandReady" }, // 78461b5b4d7fab818e02511b64fc4bdd75e322a2
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_IsSessionActive, "IsSessionActive" }, // b1605c9e97dd2f3315119f8194a49ed456a9250d
+		{ &Z_Construct_UFunction_UVrLinkSubsystem_ReleaseTablet, "ReleaseTablet" }, // 530d60263df12f462071b851a2ec6770df57c957
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SendMark, "SendMark" }, // 499a2f3fcc57b928561dfee92935d95d6c0012dd
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetLocation, "SetLocation" }, // 2754007a02b372719df09291a6d6285d27751e1f
 		{ &Z_Construct_UFunction_UVrLinkSubsystem_SetPedalling, "SetPedalling" }, // 54a4cfce7ac8e47184f327be7203b6f2d55140c9
@@ -1347,7 +1389,7 @@ UVrLinkSubsystem::~UVrLinkSubsystem() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vlpkg2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
@@ -1355,10 +1397,10 @@ struct UHT_STATICS
 		{ Z_Construct_UEnum_VrLink_EVrLinkHeadbandState, TEXT("EVrLinkHeadbandState"), &ZRIE_EVrLinkHeadbandState, CONSTRUCT_RELOAD_VERSION_INFO(FEnumReloadVersionInfo, 4279400891U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 4189745748U) },
+		{ Z_Construct_UClass_UVrLinkSubsystem, TEXT("UVrLinkSubsystem"), &Z_Registration_Info_UClass_UVrLinkSubsystem, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkSubsystem), 83720676U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlb2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_7b4e36781d9336e44e88281cd12191a0fdba702c{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlpkg2_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkSubsystem_h__Script_VrLink_ab1436acf9dc9faaaab7ef4fd216a51b32aa2eea{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	nullptr, 0,

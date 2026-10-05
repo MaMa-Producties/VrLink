@@ -53,6 +53,7 @@ type the node name. There is nothing to place in the level.
 | `Send Mark` | Something worth noting happens | A note with a time stamp, for example `oncoming:start`. |
 | `End Session` | The ride is over | Stop recording, and why (see below). |
 | `Is Session Active` | Any time | True while the tablet is recording. |
+| `Release Tablet` | A tablet crashed or lost Wi-Fi and the VR PC still holds it | Nothing: it frees the VR PC for the next tablet. See "Two bikes in one building". |
 
 ## A whole ride, step by step
 
@@ -213,19 +214,38 @@ with the same `SessionId`, so they find each other.
 
 ## Two bikes in one building
 
-With two setups on the same network, a tablet can connect to the **wrong** VR PC.
-To prevent it:
+Several tablets can share the VR PCs. A tablet takes a VR PC for one ride, lets go
+of it when the ride ends, and the next tablet takes it while the first participant
+does the questionnaire and interview. This keeps the bikes busy.
 
-1. Give each VR PC a fixed IP address on the router.
-2. On each tablet, in Settings, **turn off automatic discovery** and enter the IP
-   address of its own VR PC.
+How a VR PC decides:
+
+- **Nobody connected:** the tablet that connects gets it.
+- **A tablet is connected:** any other tablet is turned away with "busy" and looks
+  for the other VR PC, or waits. It never knocks the connected tablet off.
+- **The recording tablet loses Wi-Fi mid-ride:** it reconnects and gets its PC back.
+  The ride carries on without it in the meantime, and nothing on the VR side stops.
+- **A ride started from the VR side with no tablet connected:** the next tablet to
+  connect joins that ride.
+
+Two ways to set it up:
+
+1. **Any tablet on any free bike** (most rides per day): on every tablet, turn the
+   pairing code **off**. Tablets find whichever VR PC is free.
+2. **Fixed pairs** (a tablet always on the same bike): give each VR PC a pairing code
+   in `Study Config`, and enter the same code on its tablets.
+
+If a tablet crashes or loses Wi-Fi between rides, the VR PC can think it is still
+connected. Call **`Release Tablet`** (for example from a key) to free it for the next
+tablet.
 
 ## Troubleshooting
 
 | Problem | What to check |
 |---|---|
 | The tablet does not connect | Same network? Windows firewall: allow Unreal when it asks. The connection uses TCP port 3030. |
-| `Is Session Active` stays false after `Start Session` | The tablet is not connected yet. See the line above. |
+| A tablet says "VR PC in use" | Another tablet is connected to that VR PC. It is free again once that tablet's ride ends. If no tablet should be connected, call `Release Tablet`. |
+| `Start Session` with no tablet connected | The ride starts anyway. The next tablet to connect joins it. |
 | A tablet connects to the wrong bike | See "Two bikes in one building". |
 | `Start Baseline` does nothing | The headband is not worn or not connected. The log, the headset and the tablet all say which. |
 | Unreal asks to rebuild the plugin | Wrong engine version. See Install. |
