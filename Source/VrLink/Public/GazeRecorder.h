@@ -16,9 +16,10 @@ class UVrLinkComponent;
  * metadata) is written by the tablet; gaze lives here because it needs the scene
  * geometry the tablet cannot see.
  *
- * Setup: add this component to an actor in the level (the VR pawn is the natural
- * home, but anywhere works, it reads the player camera). Nothing else. It finds
- * the VR Link component itself and follows the recording session:
+ * Setup: none. The VR Link subsystem builds one with every link. Add one by hand
+ * only in a level that places its own VR Link component, and never alongside the
+ * subsystem's: a second recorder stays idle rather than write every row twice.
+ * It finds the VR Link component itself and follows the recording session:
  *
  *  - recording starts on the tablet  -> the file is opened
  *  - each frame                      -> one row (capped at Sample Rate Hz)
@@ -178,6 +179,22 @@ private:
 
 	FString RowBuffer;
 	int32 RowCount = 0;
+
+	/** The last eye ray that was believed, and when, for the blink check. */
+	FVector LastEyeDirection = FVector::ForwardVector;
+	double LastEyeSeconds = 0.0;
+
+	/**
+	 * Faster than this between two eye samples is not an eye moving. Saccades peak near
+	 * 600-700 deg/s; averaged over one 17-22 ms sample they stay below it.
+	 */
+	static constexpr double MaxEyeDegreesPerSecond = 1000.0;
+
+	/** How long without eyes still counts as a lost sample (Valid=0) rather than no tracking. */
+	static constexpr double EyeLostGraceSeconds = 1.0;
+
+	/** So an idle second recorder says why once, not every frame. */
+	bool bAnnouncedIdle = false;
 	float TimeSinceLastSample = 0.f;
 	float TimeSinceLastFlush = 0.f;
 };
