@@ -433,6 +433,13 @@ private:
 	TSharedRef<FJsonObject> MakeEvent(const FString& Type, double T, const FString& WallUtc);
 
 	void BeginSessionClock(const FString& WallUtc);
+
+	/** Tells the transport which session is running, so it can turn other tablets away. */
+	void PublishSession() const;
+
+	/** The tablet's connection went. Resets the handshake; the session itself carries on. */
+	void OnTabletLost();
+	FDelegateHandle TabletLostHandle;
 	double SessionElapsedSeconds() const;
 	static FString NowIso();
 

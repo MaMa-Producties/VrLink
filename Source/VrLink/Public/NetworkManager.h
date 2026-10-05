@@ -6,6 +6,8 @@
 #include "Sockets.h"
 #include "TCPSocket.h"
 #include "Async/Future.h"
+#include "HAL/CriticalSection.h"
+#include "Delegates/Delegate.h"
 #include <atomic>
 
 #define  MAX_BUFFER_SIZE 1024
@@ -42,6 +44,32 @@ public:
 	bool IsServerListening() const { return IsListening; }
 
 	FNetworkDelegate OnDataReceived;
+
+	/**
+	 * The tablet's connection has gone (closed, dropped, or replaced by the same tablet
+	 * coming back). Broadcast on the game thread. The session is NOT over: a tablet that
+	 * loses Wi-Fi mid-ride reconnects into the same session.
+	 */
+	FSimpleMulticastDelegate OnClientDisconnected;
+
+	/**
+	 * What session is running, so a second tablet can be told the PC is busy while the
+	 * one recording it can always come back. Called from the game thread.
+	 */
+	void SetActiveSession(bool bActive, const FString& SessionId);
+
+	/** Drop the connected tablet, e.g. from an operator key, if it is stuck. */
+	void DropClient();
+
+	/**
+	 * A connection that has sent `ping` before and then nothing for this long is treated
+	 * as gone, so a tablet that died without closing its socket cannot hold the PC forever.
+	 * Only applies to tablets that ping; one that never pings is never timed out.
+	 */
+	static constexpr double StaleAfterSeconds = 20.0;
+
+	/** How long a newcomer has to say `hello` before it is turned away. */
+	static constexpr double HelloWaitSeconds = 3.0;
 	
 private:
 	NetworkManager();
@@ -54,8 +82,40 @@ private:
 	/** Tears down a dead client connection so the loop stops polling it and can accept a new one. */
 	void HandleDisconnect();
 
+	/** Reads the newcomer waiting while another tablet holds the PC, and decides on its `hello`. */
+	void HandlePending();
+
+	/** Whether the held connection has gone quiet after pinging, see StaleAfterSeconds. */
+	bool IsClientStale() const;
+
+	/** Make `Socket` the tablet's connection, closing any previous one. Caller holds ClientLock. */
+	void AdoptClient(FSocket* Socket);
+
+	/** Close the current client and tell the game thread. Caller holds ClientLock. */
+	void CloseClientLocked();
+
+	/** Send `{"type":"reject","reason":...}` and close, letting the line reach the peer first. */
+	static void RejectAndClose(FSocket* Socket, const TCHAR* Reason);
+
+	static void CloseSocket(FSocket* Socket);
+
 	FSocket* ListenSocket;
 	FSocket* ClientSocket;
+
+	/** Guards ClientSocket: the loop thread replaces it while the game thread sends on it. */
+	FCriticalSection ClientLock;
+
+	/** A newcomer that arrived while a tablet was connected, waiting for its `hello`. */
+	FSocket* PendingSocket = nullptr;
+	double PendingSince = 0.0;
+	TArray<uint8> PendingBytes;
+
+	double LastClientDataSeconds = 0.0;
+	bool bClientPings = false;
+
+	FCriticalSection SessionLock;
+	bool bSessionRunning = false;
+	FString RunningSessionId;
 
 	/** The accept/receive loop task; StopServer() waits on it before destroying the sockets. */
 	TFuture<void> LoopTask;

@@ -242,6 +242,13 @@ void UVrLinkSubsystem::EndSession(const FString& Reason)
 	}
 }
 
+void UVrLinkSubsystem::ReleaseTablet()
+{
+	// Straight to the transport rather than through a component: a stuck tablet has to
+	// be freeable even in a level where the link has not been built yet.
+	NetworkManager::GetInstance().DropClient();
+}
+
 void UVrLinkSubsystem::SetLocation(const FString& Name)
 {
 	if (Name.IsEmpty() || Name == LastLocation)

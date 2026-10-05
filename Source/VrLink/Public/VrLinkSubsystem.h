@@ -125,6 +125,14 @@ public:
 	void EndSession(const FString& Reason = TEXT("complete"));
 
 	/**
+	 * Frees this PC for the next tablet by dropping the one connected. For a tablet that
+	 * crashed or lost Wi-Fi between rides and so never let go. A running ride carries on,
+	 * and its own tablet can reconnect into it.
+	 */
+	UFUNCTION(BlueprintCallable, Category = "VR Link")
+	void ReleaseTablet();
+
+	/**
 	 * The participant arrived at a location (e.g. "Spaklerweg"). Call on every
 	 * location change; consecutive duplicate names are collapsed to one event.
 	 */
