@@ -1,8 +1,9 @@
-# VR Link
+# VR Link (Primed Relay)
 
-VR Link connects your Unreal VR experience to the **Neural Recorder**, the tablet
-app that records the participant's brain activity (EEG) during the UrbanSense
-study.
+VR Link connects your Unreal VR experience to **Primed Record**, the tablet app
+that records the participant's brain activity (EEG). Both are part of **Primed**,
+the suite used in the UrbanSense study. In the suite this plugin is called
+**Primed Relay**.
 
 Your experience tells the tablet what is happening: the ride starts, the
 participant enters a location, a design appears. The tablet records the brain
@@ -53,7 +54,7 @@ type the node name. There is nothing to place in the level.
 | `Send Mark` | Something worth noting happens | A note with a time stamp, for example `oncoming:start`. |
 | `End Session` | The ride is over | Stop recording, and why (see below). |
 | `Is Session Active` | Any time | True while the tablet is recording. |
-| `Release Tablet` | A tablet crashed or lost Wi-Fi and the VR PC still holds it | Nothing: it frees the VR PC for the next tablet. See "Two bikes in one building". |
+| `Release Tablet` | A tablet crashed or lost Wi-Fi and the VR PC still holds it | Nothing: it frees the VR PC for the next tablet. See "Several tablets, two bikes". |
 
 ## A whole ride, step by step
 
@@ -212,41 +213,60 @@ on the Gaze Recorder tells you the same thing live, for example to show a warnin
 Afterwards, copy the PC's files next to the tablet's. Files of one session start
 with the same `SessionId`, so they find each other.
 
-## Two bikes in one building
+## Several tablets, two bikes
 
-Several tablets can share the VR PCs. A tablet takes a VR PC for one ride, lets go
-of it when the ride ends, and the next tablet takes it while the first participant
-does the questionnaire and interview. This keeps the bikes busy.
+On test day there are more tablets than bikes. Each tablet uses a VR PC only for
+the ride, then lets go of it, so the next participant can ride while the previous
+one does the questionnaire and interview. You do not need to do anything for this
+in your Blueprint: the plugin and the tablet handle it.
 
-How a VR PC decides:
+### How a day runs
 
-- **Nobody connected:** the tablet that connects gets it.
-- **A tablet is connected:** any other tablet is turned away with "busy" and looks
-  for the other VR PC, or waits. It never knocks the connected tablet off.
-- **The recording tablet loses Wi-Fi mid-ride:** it reconnects and gets its PC back.
-  The ride carries on without it in the meantime, and nothing on the VR side stops.
-- **A ride started from the VR side with no tablet connected:** the next tablet to
-  connect joins that ride.
+1. The operator presses **Start a new session** on a tablet. The tablet finds a
+   VR PC that is free and connects to it.
+2. The participant rides. That VR PC now belongs to this tablet.
+3. The ride ends. The tablet **lets go** of the VR PC and moves on to the
+   questionnaire and interview, without VR.
+4. Another tablet can now take that VR PC for the next participant.
 
-Two ways to set it up:
+### What a VR PC does when a tablet knocks
 
-1. **Any tablet on any free bike** (most rides per day): on every tablet, turn the
-   pairing code **off**. Tablets find whichever VR PC is free.
-2. **Fixed pairs** (a tablet always on the same bike): give each VR PC a pairing code
-   in `Study Config`, and enter the same code on its tablets.
+| Situation | What happens |
+|---|---|
+| No tablet connected | The tablet connects. |
+| Another tablet is connected | The new tablet is told **"busy"** and turned away. It tries the other VR PC, or waits and tries again. The connected tablet is **never** knocked off. |
+| The recording tablet lost Wi-Fi for a moment | It reconnects and gets its VR PC back. The ride carries on during the gap. |
+| `Start Session` was called with no tablet connected | The ride starts anyway. The next tablet to connect joins it. |
 
-If a tablet crashes or loses Wi-Fi between rides, the VR PC can think it is still
-connected. Call **`Release Tablet`** (for example from a key) to free it for the next
-tablet.
+### Set up once
+
+- **Any tablet on any free bike** (most rides per day): leave the pairing code
+  **empty** in `Study Config` on both VR PCs, and turn the pairing code **off** on
+  every tablet.
+- **Fixed pairs** (a tablet always uses the same bike): give each VR PC its own
+  pairing code in `Study Config`, and enter that code on its tablets.
+- Give each VR PC a key for **`Release Tablet`** (see below). One line of Blueprint:
+  a key press event calling `Release Tablet` on the VrLink Subsystem.
+
+### When a VR PC stays "busy"
+
+A tablet that crashes, runs out of battery or drops off Wi-Fi between rides may
+not say goodbye, so the VR PC still thinks it is connected. Every other tablet
+then gets "busy".
+
+- A tablet with a current version of Primed Record checks in every few seconds.
+  If it goes quiet for 20 seconds, the VR PC frees itself.
+- Otherwise, press the **`Release Tablet`** key on that VR PC. A ride in progress
+  is not stopped by this, and its own tablet can reconnect into it.
 
 ## Troubleshooting
 
 | Problem | What to check |
 |---|---|
 | The tablet does not connect | Same network? Windows firewall: allow Unreal when it asks. The connection uses TCP port 3030. |
-| A tablet says "VR PC in use" | Another tablet is connected to that VR PC. It is free again once that tablet's ride ends. If no tablet should be connected, call `Release Tablet`. |
-| `Start Session` with no tablet connected | The ride starts anyway. The next tablet to connect joins it. |
-| A tablet connects to the wrong bike | See "Two bikes in one building". |
+| A tablet says "VR PC in use" | Another tablet is using that VR PC. It is free again once that tablet's ride ends. If no tablet should be connected, press `Release Tablet`. See "Several tablets, two bikes". |
+| `Start Session` with no tablet connected | Not a problem: the ride starts, and the next tablet to connect joins it. |
+| A tablet connects to the wrong bike | Use fixed pairs. See "Several tablets, two bikes". |
 | `Start Baseline` does nothing | The headband is not worn or not connected. The log, the headset and the tablet all say which. |
 | Unreal asks to rebuild the plugin | Wrong engine version. See Install. |
 
