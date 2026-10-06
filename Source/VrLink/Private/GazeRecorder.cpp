@@ -30,7 +30,34 @@ namespace
 	 */
 	const TCHAR* const GazeCsvHeader =
 		TEXT("SessionId,Time,WallUtc,Source,Valid,GazeX,GazeY,")
-		TEXT("HeadX,HeadY,HeadZ,DirX,DirY,DirZ,HitX,HitY,HitZ,Scene\n");
+		TEXT("HeadX,HeadY,HeadZ,DirX,DirY,DirZ,HitX,HitY,HitZ,Scene,")
+		TEXT("HeadQuatX,HeadQuatY,HeadQuatZ,HeadQuatW\n");
+
+	/**
+	 * The gaze file's layout, sent once as `gazeformat:2` so a reader knows which columns
+	 * to expect. 2 added the head rotation, Valid=0 for rejected eye samples, and the
+	 * `route:reset` mark.
+	 */
+	const TCHAR* const GazeFormatMark = TEXT("gazeformat:2");
+
+	/**
+	 * The one recorder writing this process's gaze. The plugin builds a recorder with every
+	 * link, and the README used to say to add one to the pawn as well: with both, every
+	 * sample was written twice into the same file, 41 to 46 per cent of the rows of the
+	 * 5 October rides, in one-second blocks out of time order. The first recorder to open
+	 * the session's file owns it; any other stays idle.
+	 */
+	TWeakObjectPtr<UGazeRecorder> GActiveRecorder;
+
+	/**
+	 * Where the head was on the previous row, carried across recorders: a level load builds
+	 * a new one, and the jump it causes is exactly the reset worth marking.
+	 */
+	FVector GLastHead = FVector::ZeroVector;
+	FString GLastHeadSession;
+
+	/** A head that moves further than this between two rows was moved by the level. */
+	constexpr double ResetJumpCm = 1000.0;
 
 	/**
 	 * What produced the ray for a row. The analysis reads this per row and widens or
@@ -144,6 +171,11 @@ void UGazeRecorder::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	if (EndPlayReason == EEndPlayReason::LevelTransition)
 	{
 		Flush();
+		if (GActiveRecorder.Get() == this)
+		{
+			GActiveRecorder.Reset();
+		}
+		Super::EndPlay(EndPlayReason);
 		return;
 	}
 
@@ -163,8 +195,22 @@ void UGazeRecorder::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 	// The id is part of the condition because a VR-initiated start runs for a few frames
 	// with the clock going but no agreed id yet; those frames land in settle-in, never in
 	// a scenario, so dropping them costs nothing and saves writing a file named `_gaze.csv`.
-	const bool bShouldRecord =
+	bool bShouldRecord =
 		VrLink != nullptr && VrLink->IsSessionActive() && !VrLink->GetSessionId().IsEmpty();
+
+	// Another recorder already writes this session: stay idle rather than write it twice.
+	if (bShouldRecord && !bRecording && GActiveRecorder.IsValid() && GActiveRecorder.Get() != this
+		&& GActiveRecorder->IsRecording())
+	{
+		if (!bAnnouncedIdle)
+		{
+			bAnnouncedIdle = true;
+			Announce(FColor::Yellow, FString::Printf(
+				TEXT("A second Gaze Recorder (on %s) stays idle: one is already recording. Remove the extra one."),
+				*GetNameSafe(GetOwner())));
+		}
+		bShouldRecord = false;
+	}
 
 	// A different id while still recording means the operator started a new session without
 	// ending the old one. Close the old file first, so one file is always one session.
@@ -234,6 +280,7 @@ void UGazeRecorder::OpenFile()
 	{
 		RowBuffer.Reset();
 		bRecording = true;
+		GActiveRecorder = this;
 		Announce(FColor::Green, FString::Printf(TEXT("Continuing -> %s"), *GazeFilePath));
 		return;
 	}
@@ -253,6 +300,8 @@ void UGazeRecorder::OpenFile()
 	TimeSinceLastSample = 0.f;
 	TimeSinceLastFlush = 0.f;
 	bRecording = true;
+	GActiveRecorder = this;
+	VrLink->SendMark(GazeFormatMark);
 
 	// So `session.saved` can name the file, and the operator sees on the tablet that
 	// the PC wrote its half of the session.
@@ -279,6 +328,10 @@ void UGazeRecorder::CloseFile()
 
 	Flush();
 	bRecording = false;
+	if (GActiveRecorder.Get() == this)
+	{
+		GActiveRecorder.Reset();
+	}
 
 	Announce(FColor::Green, FString::Printf(TEXT("Saved %d rows -> %s"), RowCount, *GazeFilePath));
 }
@@ -305,7 +358,47 @@ void UGazeRecorder::CaptureSample()
 	// blink, and those rows are worth keeping as head rows rather than losing.
 	FVector Origin = Head;
 	FVector Direction = HeadDirection;
-	const bool bEye = TryEyeGaze(Origin, Direction);
+	bool bEye = TryEyeGaze(Origin, Direction);
+	const double Now = FPlatformTime::Seconds();
+
+	// A blink the runtime does not flag. The VIVE reports no confidence, so a blink came
+	// through as an eye ray flung across the view: 210 samples above 1000 deg/s on the
+	// ride of 5 October, faster than an eye can move. A sample that far from the last
+	// believed one, that quickly, is not believed; the row falls back to the head ray.
+	if (bEye && LastEyeSeconds > 0.0)
+	{
+		const double Dt = Now - LastEyeSeconds;
+		const double Degrees = FMath::RadiansToDegrees(
+			FMath::Acos(FMath::Clamp(FVector::DotProduct(Direction, LastEyeDirection), -1.0, 1.0)));
+		if (Dt > 0.0 && Degrees / Dt > MaxEyeDegreesPerSecond)
+		{
+			bEye = false;
+			Origin = Head;
+			Direction = HeadDirection;
+		}
+	}
+	if (bEye)
+	{
+		LastEyeDirection = Direction;
+		LastEyeSeconds = Now;
+	}
+
+	// Valid=0 marks an eye sample the tracker lost or that was not believed, while it was
+	// otherwise tracking: a blink, a glance to the edge. The row still carries the head
+	// ray. After a second without eyes the tracker counts as not tracking, and head rows
+	// are ordinary valid head rows again, so a session whose tracker never locked on is
+	// still a usable head-gaze session rather than one marked invalid end to end.
+	const bool bEyeLost = !bEye && LastEyeSeconds > 0.0 && Now - LastEyeSeconds < EyeLostGraceSeconds;
+
+	// The level moved the rider (a respawn, a route restart, the next design's level).
+	// Marked so the analysis does not have to guess it from a jump in the positions.
+	const FString SessionNow = VrLink ? VrLink->GetSessionId() : FString();
+	if (GLastHeadSession == SessionNow && FVector::Dist(Head, GLastHead) > ResetJumpCm && VrLink)
+	{
+		VrLink->SendMark(TEXT("route:reset"));
+	}
+	GLastHead = Head;
+	GLastHeadSession = SessionNow;
 
 	if (bEye != bEyeGazeInUse || !bEyeGazeAnnounced)
 	{
@@ -355,19 +448,30 @@ void UGazeRecorder::CaptureSample()
 	// Left blank when the point is behind the camera or the viewport is not up yet.
 	// Blank reads as missing in every CSV reader; a 0 would read as the top-left corner.
 
+	// Which way the head faced on an eye row, so a head turn can be told from an eye
+	// movement. Empty on head rows, where Dir already is the head direction.
+	FString HeadQuatColumns = TEXT(",,,");
+	if (bEye)
+	{
+		const FQuat Q = Camera->GetCameraRotation().Quaternion();
+		HeadQuatColumns = FString::Printf(TEXT("%.5f,%.5f,%.5f,%.5f"), Q.X, Q.Y, Q.Z, Q.W);
+	}
+
 	// The same clock the tablet stamps its EEG and events with, plus the wall time as the
 	// fallback for reconciling the two machines.
 	const double Time = VrLink->GetSessionElapsedSeconds();
 	const FString WallUtc = FDateTime::UtcNow().ToIso8601();
 
 	RowBuffer += FString::Printf(
-		TEXT("%s,%.3f,%s,%s,1,%s,%s,%.1f,%.1f,%.1f,%.4f,%.4f,%.4f,%s,%s\n"),
+		TEXT("%s,%.3f,%s,%s,%d,%s,%s,%.1f,%.1f,%.1f,%.4f,%.4f,%.4f,%s,%s,%s\n"),
 		*Csv(RecordingSessionId), Time, *WallUtc, bEye ? GazeSourceEye : GazeSourceHead,
+		bEyeLost ? 0 : 1,
 		*GazeX, *GazeY,
 		Head.X, Head.Y, Head.Z,
 		Direction.X, Direction.Y, Direction.Z,
 		*HitColumns,
-		*Csv(VrLink->GetCurrentScene()));
+		*Csv(VrLink->GetCurrentScene()),
+		*HeadQuatColumns);
 
 	++RowCount;
 }
