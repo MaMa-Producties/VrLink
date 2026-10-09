@@ -13,9 +13,14 @@
 #include "Async/Async.h"
 #include "Async/TaskGraphInterfaces.h"
 #include "Misc/ScopeLock.h"
+#include "Misc/Timespan.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Policies/CondensedJsonPrintPolicy.h"
 #include "Dom/JsonObject.h"
+#include "SocketSubsystem.h"
+#include "IPAddress.h"
 
 
 NetworkManager::NetworkManager()
@@ -55,12 +60,24 @@ void NetworkManager::StartServer(const FString IPAddress, const int32 Port)
 	ListenSocket = FTcpSocketBuilder(TEXT("Socket"))
 		.AsReusable()
 		.BoundToEndpoint(Endpoint)
-		.WithReceiveBufferSize(MaxBufferSize);
+		.WithReceiveBufferSize(SocketBufferBytes)
+		.WithSendBufferSize(SocketBufferBytes);
 
-	ListenSocket->SetReceiveBufferSize(MaxBufferSize, MaxBufferSize);
-	ListenSocket->SetSendBufferSize(MaxBufferSize, MaxBufferSize);
+	if (ListenSocket == nullptr || !ListenSocket->Listen(10))
+	{
+		// Port taken (a second copy of the experience running?) or no network.
+		UE_LOG(LogTemp, Error, TEXT("vrlink: could not listen on port %d; no tablet can connect."), Port);
+		if (GEngine)
+			GEngine->AddOnScreenDebugMessage(-1, 30.0f, FColor::Red,
+				FString::Printf(TEXT("VR Link: could not listen on port %d. Is the experience running twice?"), Port));
+		CloseSocket(ListenSocket);
+		ListenSocket = nullptr;
+		return;
+	}
 
-	ListenSocket->Listen(10);
+	int32 Actual = 0;
+	ListenSocket->SetReceiveBufferSize(SocketBufferBytes, Actual);
+	ListenSocket->SetSendBufferSize(SocketBufferBytes, Actual);
 
 	// Flag before launching so an immediate StopServer() can never miss the loop.
 	IsListening = true;
@@ -90,6 +107,8 @@ void NetworkManager::StopServer()
 		FScopeLock Lock(&ClientLock);
 		CloseSocket(ClientSocket);
 		ClientSocket = nullptr;
+		ClientAddress.Reset();
+		ClientPartial.Reset();
 	}
 	CloseSocket(PendingSocket);
 	PendingSocket = nullptr;
@@ -112,6 +131,11 @@ void NetworkManager::Loop()
 	}
 }
 
+FString NetworkManager::PeerAddress(const FInternetAddr& Address)
+{
+	return Address.ToString(/*bAppendPort=*/false);
+}
+
 void NetworkManager::HandleConnection()
 {
 	if (!ListenSocket)
@@ -132,6 +156,7 @@ void NetworkManager::HandleConnection()
 	{
 		return;
 	}
+	const FString From = PeerAddress(*RemoteAddress);
 
 	// vrlink is client-initiated: nothing is sent to a tablet that is let in. Unreal
 	// waits for its `hello` and replies `welcome` (see UVrLinkComponent).
@@ -141,7 +166,18 @@ void NetworkManager::HandleConnection()
 	// gets it straight away.
 	if (ClientSocket == nullptr || IsClientStale())
 	{
-		AdoptClient(Newcomer);
+		AdoptClient(Newcomer, From);
+		return;
+	}
+
+	// The same tablet again. A device cannot be its own rival: this is it reconnecting
+	// while its old connection still looks open here (a Wi-Fi blip, an app restart), or
+	// dialling twice at once. The newest connection is the one it will use, so it wins.
+	// Two tablets never share an address on the study network.
+	if (!From.IsEmpty() && From == ClientAddress)
+	{
+		UE_LOG(LogTemp, Log, TEXT("vrlink: %s connected again; the new connection replaces the old one."), *From);
+		AdoptClient(Newcomer, From);
 		return;
 	}
 
@@ -149,15 +185,26 @@ void NetworkManager::HandleConnection()
 	// tablets taking turns on one PC knocked each other off: the one in the questionnaire
 	// reconnected and threw out the one recording a ride, which then did the same back.
 	// Now the newcomer waits for its `hello`, and only gets in if it is the recording
-	// tablet coming back (HandlePending). One newcomer is heard at a time.
+	// tablet coming back (HandlePending). One newcomer is heard at a time; a second one
+	// arriving meanwhile is only unlucky, not refused, so it is asked to try again.
 	if (PendingSocket != nullptr)
 	{
-		RejectAndClose(Newcomer, TEXT("busy"));
+		if (!From.IsEmpty() && From == PendingAddress)
+		{
+			// The waiting newcomer dialled again: its newest connection is the one it uses.
+			CloseSocket(PendingSocket);
+			PendingSocket = Newcomer;
+			PendingSince = FPlatformTime::Seconds();
+			PendingBytes.Reset();
+			return;
+		}
+		RejectAndClose(Newcomer, ReasonTryAgain);
 		return;
 	}
 	PendingSocket = Newcomer;
 	PendingSince = FPlatformTime::Seconds();
 	PendingBytes.Reset();
+	PendingAddress = From;
 }
 
 void NetworkManager::HandlePending()
@@ -174,58 +221,64 @@ void NetworkManager::HandlePending()
 		{
 			FSocket* Newcomer = PendingSocket;
 			PendingSocket = nullptr;
-			TArray<uint8> Early = MoveTemp(PendingBytes);
-			AdoptClient(Newcomer);
-			if (Early.Num() > 0)
-			{
-				AsyncTask(ENamedThreads::GameThread, [this, Early = MoveTemp(Early)]() { OnDataReceived.Broadcast(Early); });
-			}
+			AdoptClient(Newcomer, PendingAddress, MoveTemp(PendingBytes));
+			PendingBytes.Reset();
 			return;
 		}
 	}
 
-	uint32 Waiting = 0;
-	if (PendingSocket->HasPendingData(Waiting))
+	if (!ReadAvailable(PendingSocket, PendingBytes))
 	{
-		uint8 Buffer[MAX_BUFFER_SIZE];
-		int32 Read = 0;
-		if (!PendingSocket->Recv(Buffer, MaxBufferSize, Read) || Read <= 0)
-		{
-			CloseSocket(PendingSocket);
-			PendingSocket = nullptr;
-			PendingBytes.Reset();
-			return;
-		}
-		PendingBytes.Append(Buffer, Read);
-	}
-
-	const int32 LineEnd = PendingBytes.IndexOfByKey(static_cast<uint8>('\n'));
-	if (LineEnd == INDEX_NONE)
-	{
-		if (FPlatformTime::Seconds() - PendingSince > HelloWaitSeconds || PendingBytes.Num() > 16 * 1024)
-		{
-			RejectAndClose(PendingSocket, TEXT("busy"));
-			PendingSocket = nullptr;
-			PendingBytes.Reset();
-		}
+		// Gave up before saying hello.
+		CloseSocket(PendingSocket);
+		PendingSocket = nullptr;
+		PendingBytes.Reset();
 		return;
 	}
 
-	// The first line is the `hello`. Read only what decides admission: which session,
-	// if any, this tablet says it is resuming.
+	// Admission is decided on the `hello`, and only on it. A tablet can send a ping or a
+	// headband report in the moment before its hello goes out; judging on the first line
+	// turned a recording tablet away as "busy", which it reads as its ride being over.
+	// Other lines are kept, and reach the component if this tablet is let in.
+	bool bHaveHello = false;
 	FString ResumeId;
 	{
-		const FUTF8ToTCHAR Text(reinterpret_cast<const ANSICHAR*>(PendingBytes.GetData()), LineEnd);
-		const FString Line(Text.Length(), Text.Get());
-		TSharedPtr<FJsonObject> Hello;
-		if (FJsonSerializer::Deserialize(TJsonReaderFactory<TCHAR>::Create(Line), Hello) && Hello.IsValid())
+		int32 Start = 0;
+		for (int32 i = 0; i < PendingBytes.Num() && !bHaveHello; ++i)
 		{
+			if (PendingBytes[i] != '\n')
+			{
+				continue;
+			}
+			const FUTF8ToTCHAR Text(reinterpret_cast<const ANSICHAR*>(PendingBytes.GetData() + Start), i - Start);
+			const FString Line(Text.Length(), Text.Get());
+			Start = i + 1;
+			TSharedPtr<FJsonObject> Msg;
+			FString Type;
+			if (!FJsonSerializer::Deserialize(TJsonReaderFactory<TCHAR>::Create(Line), Msg) || !Msg.IsValid()
+				|| !Msg->TryGetStringField(TEXT("type"), Type) || Type != TEXT("hello"))
+			{
+				continue;
+			}
+			bHaveHello = true;
 			const TSharedPtr<FJsonObject>* Resume = nullptr;
-			if (Hello->TryGetObjectField(TEXT("resume"), Resume) && Resume && Resume->IsValid())
+			if (Msg->TryGetObjectField(TEXT("resume"), Resume) && Resume && Resume->IsValid())
 			{
 				(*Resume)->TryGetStringField(TEXT("sessionId"), ResumeId);
 			}
 		}
+	}
+
+	if (!bHaveHello)
+	{
+		if (FPlatformTime::Seconds() - PendingSince > HelloWaitSeconds || PendingBytes.Num() > 16 * 1024)
+		{
+			// A slow hello is no reason to tell a tablet its ride is over.
+			RejectAndClose(PendingSocket, ReasonTryAgain);
+			PendingSocket = nullptr;
+			PendingBytes.Reset();
+		}
+		return;
 	}
 
 	bool bOwnsTheRide = false;
@@ -236,24 +289,24 @@ void NetworkManager::HandlePending()
 
 	if (!bOwnsTheRide)
 	{
-		RejectAndClose(PendingSocket, TEXT("busy"));
+		RejectAndClose(PendingSocket, ReasonBusy);
 		PendingSocket = nullptr;
 		PendingBytes.Reset();
 		UE_LOG(LogTemp, Log, TEXT("vrlink: turned away a second tablet, this PC is busy."));
 		return;
 	}
 
-	// The recording tablet came back (Wi-Fi blip): its old connection only looks open.
-	// It takes the PC back, and its `hello` goes on to the component as normal.
+	// The recording tablet came back from a new address (a Wi-Fi blip that changed its
+	// lease): its old connection only looks open. It takes the PC back, and its `hello`
+	// goes on to the component as normal.
 	FSocket* Returning = PendingSocket;
 	PendingSocket = nullptr;
-	TArray<uint8> Hello = MoveTemp(PendingBytes);
 	{
 		FScopeLock Lock(&ClientLock);
-		AdoptClient(Returning);
+		AdoptClient(Returning, PendingAddress, MoveTemp(PendingBytes));
 	}
+	PendingBytes.Reset();
 	UE_LOG(LogTemp, Log, TEXT("vrlink: the recording tablet reconnected and took its PC back."));
-	AsyncTask(ENamedThreads::GameThread, [this, Hello = MoveTemp(Hello)]() { OnDataReceived.Broadcast(Hello); });
 }
 
 bool NetworkManager::IsClientStale() const
@@ -262,16 +315,28 @@ bool NetworkManager::IsClientStale() const
 		&& FPlatformTime::Seconds() - LastClientDataSeconds > StaleAfterSeconds;
 }
 
-void NetworkManager::AdoptClient(FSocket* Socket)
+void NetworkManager::AdoptClient(FSocket* Socket, const FString& Address, TArray<uint8> Early)
 {
 	if (ClientSocket != nullptr)
 	{
 		CloseClientLocked();
 	}
 	ClientSocket = Socket;
+	ClientAddress = Address;
+	ClientPartial.Reset();
 	IsConnected = true;
 	LastClientDataSeconds = FPlatformTime::Seconds();
 	bClientPings = false;
+
+	int32 Actual = 0;
+	Socket->SetSendBufferSize(SocketBufferBytes, Actual);
+	Socket->SetReceiveBufferSize(SocketBufferBytes, Actual);
+
+	if (Early.Num() > 0)
+	{
+		ClientPartial = MoveTemp(Early);
+		DeliverLines(ClientPartial);
+	}
 }
 
 void NetworkManager::CloseClientLocked()
@@ -279,29 +344,139 @@ void NetworkManager::CloseClientLocked()
 	IsConnected = false;
 	CloseSocket(ClientSocket);
 	ClientSocket = nullptr;
+	ClientAddress.Reset();
+	ClientPartial.Reset();
 	AsyncTask(ENamedThreads::GameThread, [this]() { OnClientDisconnected.Broadcast(); });
 }
 
-void NetworkManager::RejectAndClose(FSocket* Socket, const TCHAR* Reason)
+bool NetworkManager::ReadAvailable(FSocket* Socket, TArray<uint8>& Into)
+{
+	uint8 Buffer[MAX_BUFFER_SIZE];
+	for (int32 Reads = 0; Reads < 64; ++Reads)
+	{
+		uint32 Waiting = 0;
+		if (!Socket->HasPendingData(Waiting))
+		{
+			// Nothing waiting: either nothing yet, or the peer is gone. A closed or failed
+			// socket still selects as readable; reading it then returns failure.
+			if (!Socket->Wait(ESocketWaitConditions::WaitForRead, FTimespan::Zero()))
+			{
+				return true;
+			}
+			int32 Read = 0;
+			if (!Socket->Recv(Buffer, MAX_BUFFER_SIZE, Read))
+			{
+				return false;
+			}
+			if (Read <= 0)
+			{
+				return true;   // would block: a spurious wake-up, not a close
+			}
+			Into.Append(Buffer, Read);
+			continue;
+		}
+
+		int32 Read = 0;
+		if (!Socket->Recv(Buffer, MAX_BUFFER_SIZE, Read))
+		{
+			return false;
+		}
+		if (Read <= 0)
+		{
+			return true;
+		}
+		Into.Append(Buffer, Read);
+	}
+	return true;
+}
+
+void NetworkManager::DeliverLines(TArray<uint8>& Buffer)
+{
+	int32 Last = INDEX_NONE;
+	for (int32 i = Buffer.Num() - 1; i >= 0; --i)
+	{
+		if (Buffer[i] == '\n' || Buffer[i] == '\0')
+		{
+			Last = i;
+			break;
+		}
+	}
+	if (Last == INDEX_NONE)
+	{
+		return;
+	}
+
+	TArray<uint8> Lines(Buffer.GetData(), Last + 1);
+	Buffer.RemoveAt(0, Last + 1);
+
+	if (!bClientPings)
+	{
+		// A tablet that pings can be timed out when it stops; see StaleAfterSeconds.
+		const FUTF8ToTCHAR Seen(reinterpret_cast<const ANSICHAR*>(Lines.GetData()), Lines.Num());
+		bClientPings = FString(Seen.Length(), Seen.Get()).Contains(TEXT("\"ping\""));
+	}
+
+	AsyncTask(ENamedThreads::GameThread, [this, Lines = MoveTemp(Lines)]()
+		{
+			OnDataReceived.Broadcast(Lines);
+		});
+}
+
+void NetworkManager::RejectAndClose(FSocket* Socket, const FString& Reason)
 {
 	if (Socket == nullptr)
 	{
 		return;
 	}
-	const FString Line = FString::Printf(TEXT("{\"type\":\"reject\",\"reason\":\"%s\"}\n"), Reason);
+
+	// Written with the JSON writer, not a format string: the protocol-mismatch reason
+	// carries text the peer sent, and a quote in it would break the line.
+	const TSharedRef<FJsonObject> Reject = MakeShared<FJsonObject>();
+	Reject->SetStringField(TEXT("type"), TEXT("reject"));
+	Reject->SetStringField(TEXT("reason"), Reason);
+	FString Line;
+	const TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> Writer =
+		TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Line);
+	FJsonSerializer::Serialize(Reject, Writer);
+	Line.AppendChar(TEXT('\n'));
+
 	const FTCHARToUTF8 Utf8(*Line);
-	int32 Sent = 0;
-	Socket->Send(reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length(), Sent);
+	SendAll(Socket, reinterpret_cast<const uint8*>(Utf8.Get()), Utf8.Length());
 
 	// Drain what the peer already sent and close the sending side first. Closing a socket
 	// with unread bytes resets it, and a reset can arrive before the reject is read, which
 	// would leave the tablet retrying instead of stepping aside.
-	uint32 Waiting = 0;
-	uint8 Sink[MAX_BUFFER_SIZE];
-	int32 Read = 0;
-	while (Socket->HasPendingData(Waiting) && Socket->Recv(Sink, MAX_BUFFER_SIZE, Read) && Read > 0) {}
+	TArray<uint8> Sink;
+	ReadAvailable(Socket, Sink);
 	Socket->Shutdown(ESocketShutdownMode::Write);
 	CloseSocket(Socket);
+}
+
+bool NetworkManager::SendAll(FSocket* Socket, const uint8* Data, int32 Count)
+{
+	// The socket is non-blocking: a send can take part of the line, or none of it while
+	// the buffer is full. The result used to be ignored, so the rest of the line was lost
+	// and the next one was glued onto what had gone out.
+	int32 Done = 0;
+	const double GiveUpAt = FPlatformTime::Seconds() + 0.5;
+	while (Done < Count)
+	{
+		int32 Sent = 0;
+		const bool bOk = Socket->Send(Data + Done, Count - Done, Sent);
+		if (bOk && Sent > 0)
+		{
+			Done += Sent;
+			continue;
+		}
+		const ESocketErrors Error = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)->GetLastErrorCode();
+		const bool bWouldBlock = (bOk && Sent == 0) || Error == SE_EWOULDBLOCK || Error == SE_TRY_AGAIN;
+		if (!bWouldBlock || FPlatformTime::Seconds() > GiveUpAt)
+		{
+			return false;
+		}
+		Socket->Wait(ESocketWaitConditions::WaitForWrite, FTimespan::FromMilliseconds(20));
+	}
+	return true;
 }
 
 void NetworkManager::CloseSocket(FSocket* Socket)
@@ -329,6 +504,22 @@ void NetworkManager::DropClient()
 	}
 }
 
+void NetworkManager::RejectClient(const FString& Reason)
+{
+	FScopeLock Lock(&ClientLock);
+	if (ClientSocket == nullptr)
+	{
+		return;
+	}
+	FSocket* Refused = ClientSocket;
+	ClientSocket = nullptr;
+	ClientAddress.Reset();
+	ClientPartial.Reset();
+	IsConnected = false;
+	RejectAndClose(Refused, Reason);
+	AsyncTask(ENamedThreads::GameThread, [this]() { OnClientDisconnected.Broadcast(); });
+}
+
 void NetworkManager::HandleData()
 {
 	FScopeLock Lock(&ClientLock);
@@ -337,40 +528,34 @@ void NetworkManager::HandleData()
 		return;
 	}
 
-	uint32 DataPending = 0;
-	if (!ClientSocket->HasPendingData(DataPending))
+	const int32 Before = ClientPartial.Num();
+	const bool bOpen = ReadAvailable(ClientSocket, ClientPartial);
+
+	// What arrived is delivered before any close is acted on: a tablet that sends its
+	// session.end and lets go at once has both land in the same read, and the end must
+	// reach the component first. The lines are queued ahead of the disconnect.
+	if (ClientPartial.Num() != Before)
 	{
-		return;
+		LastClientDataSeconds = FPlatformTime::Seconds();
+		DeliverLines(ClientPartial);
 	}
 
-	int32 BytesRead = 0;
-	uint8 Buffer[MAX_BUFFER_SIZE];
-	const bool bRecvOk = ClientSocket->Recv(Buffer, MaxBufferSize, BytesRead);
-
-	// A socket that reports readable but yields nothing is a peer that has gone away,
-	// not data. Previously the result was ignored and nothing ever cleared IsConnected,
-	// so a disconnected tablet left this loop re-reading the dead socket every
-	// millisecond and flooding the game thread with empty packets forever.
-	if (!bRecvOk || BytesRead <= 0)
+	if (!bOpen)
 	{
+		// Closed by the tablet (it let go after its ride), or failed. This used to go
+		// unnoticed: the check only read when bytes were waiting, and a closed socket has
+		// none, so the PC stayed "busy" until the ping timeout and the handshake was never
+		// reset.
 		HandleDisconnect();
 		return;
 	}
 
-	LastClientDataSeconds = FPlatformTime::Seconds();
-	if (!bClientPings)
+	// A peer that never sends a newline cannot grow the buffer without bound.
+	if (ClientPartial.Num() > 64 * 1024)
 	{
-		// A tablet that pings can be timed out when it stops; see StaleAfterSeconds.
-		const FUTF8ToTCHAR Seen(reinterpret_cast<const ANSICHAR*>(Buffer), BytesRead);
-		bClientPings = FString(Seen.Length(), Seen.Get()).Contains(TEXT("\"ping\""));
+		UE_LOG(LogTemp, Warning, TEXT("vrlink: dropped %d bytes from the tablet with no line end."), ClientPartial.Num());
+		ClientPartial.Reset();
 	}
-
-	// Build the payload here rather than copying the whole 1 KB buffer into the lambda.
-	TArray<uint8> Payload(Buffer, BytesRead);
-	AsyncTask(ENamedThreads::GameThread, [this, Payload = MoveTemp(Payload)]()
-		{
-			OnDataReceived.Broadcast(Payload);
-		});
 }
 
 void NetworkManager::HandleDisconnect()
@@ -427,10 +612,14 @@ bool NetworkManager::Send(const uint8* Data, const int Count)
 	FScopeLock Lock(&ClientLock);
 	if (ClientSocket)
 	{
-		int32 BytesSent = 0;
-		return ClientSocket->Send(Data, Count, BytesSent);
+		if (SendAll(ClientSocket, Data, Count))
+		{
+			return true;
+		}
+		// Part of a line may have gone out. Anything sent after it would be glued onto
+		// the torn half, so the connection is closed and the tablet reconnects cleanly.
+		UE_LOG(LogTemp, Warning, TEXT("vrlink: could not send to the tablet; closing the connection."));
+		CloseClientLocked();
 	}
 	return false;
 }
-
-

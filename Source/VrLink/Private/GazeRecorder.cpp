@@ -231,6 +231,13 @@ void UGazeRecorder::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 		return;
 	}
 
+	// A tablet that reconnected mid-ride starts from a fresh welcome and has forgotten
+	// whether an eye tracker is on: the mark is sent once per file, so it is sent again.
+	if (VrLink->GetWelcomeCount() != MarkedWelcomeCount)
+	{
+		SendTrackerMark();
+	}
+
 	// Flush on wall-clock time, before the rate gate can return early, so the interval
 	// means one second of real time whatever the frame rate is doing.
 	TimeSinceLastFlush += DeltaTime;
@@ -250,6 +257,16 @@ void UGazeRecorder::TickComponent(float DeltaTime, ELevelTick TickType, FActorCo
 			return;
 		}
 		TimeSinceLastSample = 0.f;
+	}
+
+	// The tablet has paused the recording: it writes nothing meanwhile and its clock stands
+	// still, so neither does this file. Rows written now would all carry the same Time.
+	if (VrLink->IsSessionPaused())
+	{
+		// The rider may move on while paused; the jump between the last row before the
+		// pause and the first after it is not a reset of the route.
+		GLastHeadSession.Reset();
+		return;
 	}
 
 	CaptureSample();
@@ -281,6 +298,7 @@ void UGazeRecorder::OpenFile()
 		RowBuffer.Reset();
 		bRecording = true;
 		GActiveRecorder = this;
+		MarkedWelcomeCount = VrLink->GetWelcomeCount();
 		Announce(FColor::Green, FString::Printf(TEXT("Continuing -> %s"), *GazeFilePath));
 		return;
 	}
@@ -313,10 +331,16 @@ void UGazeRecorder::OpenFile()
 	// very different things to whoever reads the numbers: the first has no eye data
 	// to be missing, the second has eye data that failed. Without this the only way
 	// to tell them apart is to ask whoever ran the session.
-	const bool bTracker = bPreferEyeTracking && UEyeTrackerFunctionLibrary::IsEyeTrackerConnected();
-	VrLink->SendMark(bTracker ? TEXT("eyetracker:present") : TEXT("eyetracker:absent"));
+	SendTrackerMark();
 
 	Announce(FColor::Green, FString::Printf(TEXT("Recording -> %s"), *GazeFilePath));
+}
+
+void UGazeRecorder::SendTrackerMark()
+{
+	const bool bTracker = bPreferEyeTracking && UEyeTrackerFunctionLibrary::IsEyeTrackerConnected();
+	VrLink->SendMark(bTracker ? TEXT("eyetracker:present") : TEXT("eyetracker:absent"));
+	MarkedWelcomeCount = VrLink->GetWelcomeCount();
 }
 
 void UGazeRecorder::CloseFile()
