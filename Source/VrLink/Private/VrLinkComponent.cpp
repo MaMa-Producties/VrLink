@@ -643,10 +643,17 @@ void UVrLinkComponent::HandleHello(const TSharedPtr<FJsonObject>& Msg)
 void UVrLinkComponent::HandleSessionStart(const TSharedPtr<FJsonObject>& Msg)
 {
 	// Unity-initiated start (spec §4 case A): adopt its sessionId and reply session.started.
-	BeginSessionClock(NowIso());
-
 	FString IncomingId;
 	Msg->TryGetStringField(TEXT("sessionId"), IncomingId);
+
+	// The same session again (the tablet repeating itself after a reconnect) keeps the
+	// clock it has. Restarting it would put every later gaze row behind the tablet by
+	// however long the session had already run.
+	const bool bSameSession = bSessionActive && !SessionId.IsEmpty() && IncomingId == SessionId;
+	if (!bSameSession)
+	{
+		BeginSessionClock(NowIso());
+	}
 	if (IncomingId.IsEmpty())
 	{
 		// Responder mints the id when the initiator sent null.
@@ -727,6 +734,19 @@ void UVrLinkComponent::HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg)
 
 void UVrLinkComponent::StartSession()
 {
+	// Already recording, usually because the tablet pressed Start first and the experience
+	// calls Start Session as well when its ride begins. This used to start the clock again,
+	// so the gaze file's Time restarted from zero partway through and every row after it sat
+	// behind the tablet's events by however long the wait had been: 17 seconds on the ride of
+	// 5 October, while the baseline waited for the headband. The session is the one already
+	// running; nothing about it changes.
+	if (bSessionActive)
+	{
+		UE_LOG(LogTemp, Log, TEXT("[vrlink] Start Session while session %s is already recording; it carries on."),
+			SessionId.IsEmpty() ? TEXT("(id pending)") : *SessionId);
+		return;
+	}
+
 	// VR-initiated (spec §4 case B): start our clock and send a null sessionId; Unity mints it.
 	BeginSessionClock(NowIso());
 	SessionId.Reset();

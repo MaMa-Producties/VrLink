@@ -100,6 +100,17 @@ void UVrLinkSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// The on-screen line. Whether the link is up and whether the tablet is on it
 	// are the two facts nothing else on screen answers, and their absence is
 	// indistinguishable from the plugin not being loaded at all.
+	// The pedal smoothing needs a clock of its own: Set Pedalling may only be called when
+	// the sensor changes, and a change has to be reported once it has held, not when the
+	// next change happens to arrive.
+	PedalTickHandle = FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateWeakLambda(this, [this](float) -> bool
+		{
+			ReportPedalling();
+			return true;
+		}),
+		0.05f);
+
 	StatusTickHandle = FTSTicker::GetCoreTicker().AddTicker(
 		FTickerDelegate::CreateWeakLambda(this, [this](float) -> bool
 		{
@@ -132,6 +143,7 @@ void UVrLinkSubsystem::Deinitialize()
 {
 	FTSTicker::GetCoreTicker().RemoveTicker(BuildTickHandle);
 	FTSTicker::GetCoreTicker().RemoveTicker(StatusTickHandle);
+	FTSTicker::GetCoreTicker().RemoveTicker(PedalTickHandle);
 	FWorldDelegates::OnPostWorldInitialization.Remove(WorldReadyHandle);
 	FWorldDelegates::OnWorldBeginTearDown.Remove(WorldTearDownHandle);
 	Super::Deinitialize();
@@ -219,6 +231,18 @@ void UVrLinkSubsystem::BuildLink(UWorld* World)
 
 void UVrLinkSubsystem::StartSession()
 {
+	// A session already recording is left exactly as it is: no clock restart (see the
+	// component), and none of the per-session memory below wiped either, which would
+	// re-send the last location and pedal state into the middle of the ride.
+	if (const UVrLinkComponent* Running = FindLink())
+	{
+		if (Running->IsSessionActive())
+		{
+			UE_LOG(LogVrLinkSubsystem, Log, TEXT("VR Link: Start Session while already recording; it carries on."));
+			return;
+		}
+	}
+
 	LastLocation.Reset();
 	// A new participant's pedals are not the last participant's. Without this the
 	// opening Set Pedalling of the next session is collapsed against the previous
@@ -304,9 +328,43 @@ void UVrLinkSubsystem::SetPedalling(bool bTurning)
 	// The tablet drops repeats as well. Both sides do it because either can be the
 	// one that is replaced, and the cost of the check is nothing next to the cost of
 	// an event log filled with rows saying the same thing.
-	if (LastPedalling.IsSet() && LastPedalling.GetValue() == bTurning)
+	//
+	// Smoothed, too. A bike sensor read every tick flickers: on the ride of 5 October it
+	// sent 29 starts and 29 stops in four minutes, some 2 ms apart. Every change is
+	// recorded here and only reported once it has held (see ReportPedalling).
+	const double Now = FPlatformTime::Seconds();
+	if (!RawPedalling.IsSet() || RawPedalling.GetValue() != bTurning)
+	{
+		RawPedalling = bTurning;
+		RawPedallingSince = Now;
+	}
+
+	// The first report of a session goes out straight away: it is the "the sensor is
+	// connected" statement, and nothing earlier exists for it to flicker against.
+	if (!LastPedalling.IsSet())
+	{
+		ReportPedalling();
+	}
+}
+
+void UVrLinkSubsystem::ReportPedalling()
+{
+	if (!RawPedalling.IsSet())
 	{
 		return;
+	}
+	const bool bTurning = RawPedalling.GetValue();
+	if (LastPedalling.IsSet())
+	{
+		if (LastPedalling.GetValue() == bTurning)
+		{
+			return;
+		}
+		const double Held = FPlatformTime::Seconds() - RawPedallingSince;
+		if (Held < (bTurning ? PedalStartHoldSeconds : PedalStopHoldSeconds))
+		{
+			return;
+		}
 	}
 
 	if (UVrLinkComponent* Link = RequireLink(TEXT("SetPedalling")))

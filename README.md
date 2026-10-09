@@ -42,7 +42,7 @@ type the node name. There is nothing to place in the level.
 | Node | Call it when | What it tells the tablet |
 |---|---|---|
 | `Initialize Vr Link` | Once, when the level starts | The project name. The PC then waits for the tablet to connect. |
-| `Start Session` | The participant is ready to begin | Start recording. |
+| `Start Session` | The participant is ready to begin | Start recording. If the tablet already started the recording, nothing changes: the session and its clock carry on. |
 | `Set Pedalling` | The bike sensor changes (or every tick) | Whether the pedals are turning. |
 | `Can Start Baseline` | Before the baseline | True only when the headband is worn and working. |
 | `Get Headband Message` | While waiting for the headband | A line of text to show the participant. Empty when all is fine. |
@@ -143,6 +143,10 @@ Even if the participant is standing still. After that, call it whenever the bike
 sensor changes (every tick is fine, repeats are ignored). Without that first call
 the analysis cannot tell "not pedalling" from "sensor not connected".
 
+The plugin smooths the sensor for you: a start is only passed on after 0.3 s of
+pedalling, a stop after 0.6 s without. So a flickering sensor no longer fills the
+tablet's log, and each pedal event reaches the tablet that much after the change.
+
 ### 8. One session per participant
 
 Call `Start Session` once at the beginning and `End Session` once at the end.
@@ -165,8 +169,13 @@ the connection drop. Always end with `End Session` when you can.
 
 ## Gaze recording (where people look)
 
-Add the **Gaze Recorder** component to your VR pawn. That is all: it starts and
-stops with the session by itself and writes `{SessionId}_gaze.csv`.
+VR Link records gaze **by itself**. There is nothing to add: it starts and stops
+with the session and writes `{SessionId}_gaze.csv`.
+
+**Do not add a Gaze Recorder component to your pawn.** Earlier versions of this
+README said to, and then two recorders wrote every row twice into the same file. If
+your pawn has one, remove it. Until you do, the extra one stays idle and says so in
+the headset: "A second Gaze Recorder ... stays idle".
 
 There is no need to tag objects. The heat map uses the point in the world where
 the participant's view lands. When they look at the sky or an open street, that
@@ -176,6 +185,26 @@ Without eye tracking, the recorder follows the direction of the **head**. With a
 headset that tracks the **eyes**, it follows the eyes instead, which is much more
 precise. It switches by itself: every row says which one it used, `head` or `eye`,
 in the `Source` column.
+
+### What is in the gaze file
+
+One row per frame (up to 60 a second). The columns that matter:
+
+| Column | What it says |
+|---|---|
+| `Source` | `eye` when the eye tracker gave the direction, `head` when the head did. |
+| `Valid` | `0` when the eye tracker was tracking but lost this sample, for example during a blink. The row then has the head direction. Otherwise `1`. |
+| `HeadX/Y/Z` | Where the head was, in centimetres. |
+| `DirX/Y/Z` | The direction of the look: the eyes on `eye` rows, the head on `head` rows. |
+| `HitX/Y/Z` | Where the look landed. Empty when it landed on nothing (sky, open street). |
+| `Scene` | The location at that moment. |
+| `HeadQuatX/Y/Z/W` | Which way the head faced, on `eye` rows only, so a head turn can be told from an eye movement. Empty on `head` rows. |
+
+The tablet's event log also gets two marks from the gaze side:
+
+- `gazeformat:2` at the start, which says the file has the columns above.
+- `route:reset` whenever the participant is moved more than 10 m at once (a new
+  level, a respawn, a route restart). You do not need to send it yourself.
 
 ### Eye tracking setup (HTC VIVE Focus Vision)
 

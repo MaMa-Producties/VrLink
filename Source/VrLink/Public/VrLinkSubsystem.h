@@ -393,4 +393,20 @@ private:
 	 * analysis refuses to guess between them.
 	 */
 	TOptional<bool> LastPedalling;
+
+	/** What the sensor says right now, and since when; reported once it has held. */
+	TOptional<bool> RawPedalling;
+	double RawPedallingSince = 0.0;
+
+	/**
+	 * How long a change must hold before it is reported. Turning is believed sooner than
+	 * stopping, because a pedal stroke can briefly read as still. The tablet stamps events
+	 * when they arrive, so a reported change lands this much after the real one.
+	 */
+	static constexpr double PedalStartHoldSeconds = 0.3;
+	static constexpr double PedalStopHoldSeconds = 0.6;
+
+	/** Sends the smoothed pedal state when it has changed and held. */
+	void ReportPedalling();
+	FTSTicker::FDelegateHandle PedalTickHandle;
 };
