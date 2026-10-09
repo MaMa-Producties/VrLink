@@ -195,6 +195,12 @@ private:
 
 	/** So an idle second recorder says why once, not every frame. */
 	bool bAnnouncedIdle = false;
+
+	/** The link's welcome count when `eyetracker:*` was last sent; see TickComponent. */
+	int32 MarkedWelcomeCount = -1;
+
+	/** `eyetracker:present` or `eyetracker:absent`, sent to the tablet. */
+	void SendTrackerMark();
 	float TimeSinceLastSample = 0.f;
 	float TimeSinceLastFlush = 0.f;
 };

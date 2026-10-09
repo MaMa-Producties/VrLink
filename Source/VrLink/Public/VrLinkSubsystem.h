@@ -91,6 +91,7 @@ enum class EVrLinkHeadbandState : uint8
 
 /** Fires whenever the headband state changes, including when it goes stale to Absent. */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVrLinkHeadbandChanged, EVrLinkHeadbandState, State);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FVrLinkRecordingEnded, const FString&, Reason);
 
 UCLASS(DisplayName = "VR Link")
 class VRLINK_API UVrLinkSubsystem : public UGameInstanceSubsystem
@@ -263,6 +264,26 @@ public:
 	/** Whether a recording session is running right now. */
 	UFUNCTION(BlueprintPure, Category = "VR Link")
 	bool IsSessionActive() const;
+
+	/**
+	 * Whether the tablet has paused the recording. While it is paused the session clock
+	 * stands still and no gaze is written, as on the tablet. The ride itself is yours to
+	 * hold or not.
+	 */
+	UFUNCTION(BlueprintPure, Category = "VR Link")
+	bool IsSessionPaused() const;
+
+	/**
+	 * Fires when the tablet ends the recording: the operator pressed Stop, or the tablet
+	 * closed the session. `Reason` is the tablet's, for example `complete` or
+	 * `operator-stop`. Nothing on the VR side stops by itself; bind this if it should.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "VR Link", meta = (DisplayName = "On Recording Ended"))
+	FVrLinkRecordingEnded OnRecordingEnded;
+
+	/** Forwards the link's own event. Not for Blueprint. */
+	UFUNCTION()
+	void ForwardRecordingEnded(const FString& Reason);
 
 	/** The agreed session id, empty outside a session. */
 	UFUNCTION(BlueprintPure, Category = "VR Link")

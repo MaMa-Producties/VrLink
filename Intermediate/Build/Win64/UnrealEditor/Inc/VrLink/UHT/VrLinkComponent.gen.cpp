@@ -27,6 +27,7 @@ VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_ExperienceFinished__D
 VRLINK_API UScriptStruct* Z_Construct_UScriptStruct_FExperienceStep(ETypeConstructPhase);
 VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_ExperienceStepEnded__DelegateSignature(ETypeConstructPhase);
 VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_ExperienceStepStarted__DelegateSignature(ETypeConstructPhase);
+VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_RecordingEnded__DelegateSignature(ETypeConstructPhase);
 VRLINK_API UFunction* Z_Construct_UDelegateFunction_VrLink_RecordingStarted__DelegateSignature(ETypeConstructPhase);
 VRLINK_API UClass* Z_Construct_UClass_UVrLinkComponent(ETypeConstructPhase);
 VRLINK_API UScriptStruct* Z_Construct_UScriptStruct_FVrLinkStudyConfig(ETypeConstructPhase);
@@ -758,6 +759,54 @@ UFunction* Z_Construct_UDelegateFunction_VrLink_RecordingStarted__DelegateSignat
 #undef UHT_STATICS
 // ********** End Delegate FRecordingStarted *******************************************************
 
+// ********** Begin Delegate FRecordingEnded *******************************************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UDelegateFunction_VrLink_RecordingEnded__DelegateSignature_Statics
+struct UHT_STATICS
+{
+	struct _Script_VrLink_eventRecordingEnded_Parms
+	{
+		FString Reason;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
+	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Reason_MetaData[] = {
+		{ "NativeConst", "" },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Delegate FRecordingEnded constinit property declarations ***********************
+	static const UECodeGen_Private::FStrPropertyParams NewProp_Reason;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Delegate FRecordingEnded constinit property declarations *************************
+	static const UECodeGen_Private::FDelegateFunctionParams FuncParams;
+};
+
+// ********** Begin Delegate FRecordingEnded Property Definitions **********************************
+const UECodeGen_Private::FStrPropertyParams UHT_STATICS::NewProp_Reason = { "Reason", nullptr, (EPropertyFlags)0x0010000000000080, UECodeGen_Private::EPropertyGenFlags::Str, nullptr, nullptr, 1, STRUCT_OFFSET(_Script_VrLink_eventRecordingEnded_Parms, Reason), METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Reason_MetaData), NewProp_Reason_MetaData) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Reason,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Delegate FRecordingEnded Property Definitions ************************************
+const UECodeGen_Private::FDelegateFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UPackage__Script_VrLink, nullptr, "RecordingEnded__DelegateSignature", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::_Script_VrLink_eventRecordingEnded_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x00130000, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::_Script_VrLink_eventRecordingEnded_Parms) < MAX_uint16);
+UFunction* Z_Construct_UDelegateFunction_VrLink_RecordingEnded__DelegateSignature(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUDelegateFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+// ********** End Delegate FRecordingEnded *********************************************************
+
 // ********** Begin Class UVrLinkComponent Function EndSession *************************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -1305,6 +1354,65 @@ DEFINE_FUNCTION(UVrLinkComponent::execIsSessionActive)
 }
 // ********** End Class UVrLinkComponent Function IsSessionActive **********************************
 
+// ********** Begin Class UVrLinkComponent Function IsSessionPaused ********************************
+#ifdef UHT_STATICS
+#error UHT_STATICS already defined
+#endif
+#define UHT_STATICS Z_Construct_UFunction_UVrLinkComponent_IsSessionPaused_Statics
+struct UHT_STATICS
+{
+	struct VrLinkComponent_eventIsSessionPaused_Parms
+	{
+		bool ReturnValue;
+	};
+#if WITH_METADATA
+	static constexpr UECodeGen_Private::FMetaDataPairParam Type_MetaData[] = {
+		{ "Category", "VrLink" },
+		{ "Comment", "/** Whether the tablet has paused the recording. The session clock stands still meanwhile. */" },
+		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
+		{ "ToolTip", "Whether the tablet has paused the recording. The session clock stands still meanwhile." },
+	};
+#endif // WITH_METADATA
+
+// ********** Begin Function IsSessionPaused constinit property declarations ***********************
+	static void NewProp_ReturnValue_SetBit(void* Obj)
+	{
+		((VrLinkComponent_eventIsSessionPaused_Parms*)Obj)->ReturnValue = 1;
+	}
+	static const UECodeGen_Private::FBoolPropertyParams NewProp_ReturnValue;
+	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
+// ********** End Function IsSessionPaused constinit property declarations *************************
+	static const UECodeGen_Private::FFunctionParams FuncParams;
+};
+
+// ********** Begin Function IsSessionPaused Property Definitions **********************************
+const UECodeGen_Private::FBoolPropertyParams UHT_STATICS::NewProp_ReturnValue = { "ReturnValue", nullptr, (EPropertyFlags)0x0010000000000580, UECodeGen_Private::EPropertyGenFlags::Bool | UECodeGen_Private::EPropertyGenFlags::NativeBool, nullptr, nullptr, 1, sizeof(bool), sizeof(VrLinkComponent_eventIsSessionPaused_Parms), &UHT_STATICS::NewProp_ReturnValue_SetBit, METADATA_PARAMS(0, nullptr) };
+const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_ReturnValue,
+};
+static_assert(UE_ARRAY_COUNT(UHT_STATICS::PropPointers) < 2048);
+// ********** End Function IsSessionPaused Property Definitions ************************************
+const UECodeGen_Private::FFunctionParams UHT_STATICS::FuncParams = { { (FTypeConstructFunc*)Z_Construct_UClass_UVrLinkComponent, nullptr, "IsSessionPaused", UHT_STATICS::PropPointers, UE_ARRAY_COUNT(UHT_STATICS::PropPointers), DataSizeOf<UHT_STATICS::VrLinkComponent_eventIsSessionPaused_Parms>(), RF_Public|RF_Transient|RF_MarkAsNative, (EFunctionFlags)0x54020401, 0, 0, METADATA_PARAMS(UE_ARRAY_COUNT(UHT_STATICS::Type_MetaData), UHT_STATICS::Type_MetaData)},  };
+static_assert(sizeof(UHT_STATICS::VrLinkComponent_eventIsSessionPaused_Parms) < MAX_uint16);
+UFunction* Z_Construct_UFunction_UVrLinkComponent_IsSessionPaused(ETypeConstructPhase Phase)
+{
+	static UFunction* ReturnFunction = nullptr;
+	if (!ReturnFunction)
+	{
+		UECodeGen_Private::ConstructUFunction(&ReturnFunction, UHT_STATICS::FuncParams);
+	}
+	return ReturnFunction;
+}
+#undef UHT_STATICS
+DEFINE_FUNCTION(UVrLinkComponent::execIsSessionPaused)
+{
+	P_FINISH;
+	P_NATIVE_BEGIN;
+	*(bool*)Z_Param__Result=P_THIS->IsSessionPaused();
+	P_NATIVE_END;
+}
+// ********** End Class UVrLinkComponent Function IsSessionPaused **********************************
+
 // ********** Begin Class UVrLinkComponent Function OnStartTriggerOverlap **************************
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
@@ -1744,6 +1852,12 @@ struct UHT_STATICS
 		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
 		{ "ToolTip", "Fired when the recording session starts: the tablet operator's Start Recording (its session.start),\nor a VR-initiated start. Bind this in Blueprint to begin environment movement or visuals the moment\nrecording begins, independently of the Steps timeline." },
 	};
+	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_OnRecordingEnded_MetaData[] = {
+		{ "Category", "VrLink" },
+		{ "Comment", "/**\n\x09 * Fires when the tablet ends the recording (the operator pressed Stop, or the tablet\n\x09 * closed the session). `Reason` is what the tablet sent, for example `complete` or\n\x09 * `operator-stop`. The experience is not stopped for you: bind this if it should be.\n\x09 */" },
+		{ "ModuleRelativePath", "Public/VrLinkComponent.h" },
+		{ "ToolTip", "Fires when the tablet ends the recording (the operator pressed Stop, or the tablet\nclosed the session). `Reason` is what the tablet sent, for example `complete` or\n`operator-stop`. The experience is not stopped for you: bind this if it should be." },
+	};
 	static constexpr UECodeGen_Private::FMetaDataPairParam NewProp_Socket_MetaData[] = {
 		{ "Category", "VrLink" },
 		{ "Comment", "/** The transport actor. If left null it is auto-discovered in the level on BeginPlay. */" },
@@ -1771,6 +1885,7 @@ struct UHT_STATICS
 	static const UECodeGen_Private::FMulticastDelegatePropertyParams NewProp_OnStepEnded;
 	static const UECodeGen_Private::FMulticastDelegatePropertyParams NewProp_OnExperienceFinished;
 	static const UECodeGen_Private::FMulticastDelegatePropertyParams NewProp_OnRecordingStarted;
+	static const UECodeGen_Private::FMulticastDelegatePropertyParams NewProp_OnRecordingEnded;
 	static const UECodeGen_Private::FObjectPropertyParams NewProp_Socket;
 	static const UECodeGen_Private::FStructPropertyParams NewProp_StudyConfig;
 	static const UECodeGen_Private::FPropertyParamsBase* const PropPointers[];
@@ -1786,6 +1901,7 @@ struct UHT_STATICS
 		{ .NameUTF8 = UTF8TEXT("HandleLine"), .Pointer = &UVrLinkComponent::execHandleLine },
 		{ .NameUTF8 = UTF8TEXT("IsRunning"), .Pointer = &UVrLinkComponent::execIsRunning },
 		{ .NameUTF8 = UTF8TEXT("IsSessionActive"), .Pointer = &UVrLinkComponent::execIsSessionActive },
+		{ .NameUTF8 = UTF8TEXT("IsSessionPaused"), .Pointer = &UVrLinkComponent::execIsSessionPaused },
 		{ .NameUTF8 = UTF8TEXT("OnStartTriggerOverlap"), .Pointer = &UVrLinkComponent::execOnStartTriggerOverlap },
 		{ .NameUTF8 = UTF8TEXT("SendError"), .Pointer = &UVrLinkComponent::execSendError },
 		{ .NameUTF8 = UTF8TEXT("SendMark"), .Pointer = &UVrLinkComponent::execSendMark },
@@ -1806,6 +1922,7 @@ struct UHT_STATICS
 		{ &Z_Construct_UFunction_UVrLinkComponent_HandleLine, "HandleLine" }, // f3cee7b055480e3be68d78d2b5f321167414dec1
 		{ &Z_Construct_UFunction_UVrLinkComponent_IsRunning, "IsRunning" }, // 6eeeb9a91d0077d942449e9bd2963fc721ffe754
 		{ &Z_Construct_UFunction_UVrLinkComponent_IsSessionActive, "IsSessionActive" }, // 6d56e894ed2a205ea601dcc1854c7aa032c2665f
+		{ &Z_Construct_UFunction_UVrLinkComponent_IsSessionPaused, "IsSessionPaused" }, // 7fe5eb579371e31dd69ae59186610bb101b9bb63
 		{ &Z_Construct_UFunction_UVrLinkComponent_OnStartTriggerOverlap, "OnStartTriggerOverlap" }, // 289a9b6914a4264c1f0920595e774a0c65938cb7
 		{ &Z_Construct_UFunction_UVrLinkComponent_SendError, "SendError" }, // 42fa9b6eebd3587033151fe2ed0749f86b72e42e
 		{ &Z_Construct_UFunction_UVrLinkComponent_SendMark, "SendMark" }, // d0d604de41a06c5248bae186d87850a3ea58cbb4
@@ -1834,6 +1951,7 @@ const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_O
 const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_OnStepEnded = { "OnStepEnded", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, OnStepEnded), Z_Construct_UDelegateFunction_VrLink_ExperienceStepEnded__DelegateSignature, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OnStepEnded_MetaData), NewProp_OnStepEnded_MetaData) }; // 06fc959b921510bd1bf509d6a20db087a37122a0
 const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_OnExperienceFinished = { "OnExperienceFinished", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, OnExperienceFinished), Z_Construct_UDelegateFunction_VrLink_ExperienceFinished__DelegateSignature, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OnExperienceFinished_MetaData), NewProp_OnExperienceFinished_MetaData) }; // aabfea2b1cc3b34406cce1f6c76bd1c3416836ec
 const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_OnRecordingStarted = { "OnRecordingStarted", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, OnRecordingStarted), Z_Construct_UDelegateFunction_VrLink_RecordingStarted__DelegateSignature, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OnRecordingStarted_MetaData), NewProp_OnRecordingStarted_MetaData) }; // 89f3ba303badde1a21bd9d5869d7131b713d7825
+const UECodeGen_Private::FMulticastDelegatePropertyParams UHT_STATICS::NewProp_OnRecordingEnded = { "OnRecordingEnded", nullptr, (EPropertyFlags)0x0010000010080000, UECodeGen_Private::EPropertyGenFlags::InlineMulticastDelegate, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, OnRecordingEnded), Z_Construct_UDelegateFunction_VrLink_RecordingEnded__DelegateSignature, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_OnRecordingEnded_MetaData), NewProp_OnRecordingEnded_MetaData) }; // e5dfc8d38d84fd26775b80a595d14fb37b3f0f0f
 const UECodeGen_Private::FObjectPropertyParams UHT_STATICS::NewProp_Socket = { "Socket", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Object, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, Socket), Z_Construct_UClass_ATCPSocket, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_Socket_MetaData), NewProp_Socket_MetaData) };
 const UECodeGen_Private::FStructPropertyParams UHT_STATICS::NewProp_StudyConfig = { "StudyConfig", nullptr, (EPropertyFlags)0x0010000000000005, UECodeGen_Private::EPropertyGenFlags::Struct, nullptr, nullptr, 1, STRUCT_OFFSET(UVrLinkComponent, StudyConfig), Z_Construct_UScriptStruct_FVrLinkStudyConfig, METADATA_PARAMS(UE_ARRAY_COUNT(NewProp_StudyConfig_MetaData), NewProp_StudyConfig_MetaData) }; // 986a447181f2d0d0b02c34e5372c1ad3afd27532
 const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] = {
@@ -1849,6 +1967,7 @@ const UECodeGen_Private::FPropertyParamsBase* const UHT_STATICS::PropPointers[] 
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OnStepEnded,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OnExperienceFinished,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OnRecordingStarted,
+	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_OnRecordingEnded,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_Socket,
 	(const UECodeGen_Private::FPropertyParamsBase*)&UHT_STATICS::NewProp_StudyConfig,
 };
@@ -1921,7 +2040,7 @@ UVrLinkComponent::~UVrLinkComponent() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vlpkg4_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vlpkg6_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
@@ -1935,10 +2054,10 @@ struct UHT_STATICS
 		{ Z_Construct_UScriptStruct_FVrLinkStudyConfig, Z_Construct_UScriptStruct_FVrLinkStudyConfig_Statics::NewStructOps, TEXT("VrLinkStudyConfig"),&Z_Registration_Info_UScriptStruct_FVrLinkStudyConfig, CONSTRUCT_RELOAD_VERSION_INFO(FStructReloadVersionInfo, sizeof(FVrLinkStudyConfig), 2557101169U) },
 	};
 	static constexpr FClassRegisterCompiledInInfo ClassInfo[] = {
-		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 2698031028U) },
+		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 1238077825U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlpkg4_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_104d1b038931f745fc389e0fd63f54a1e50fd132{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlpkg6_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_d4676f52b9b978ec7bdef26b443d30bc8da8553f{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	UHT_STATICS::ScriptStructInfo, UE_ARRAY_COUNT(UHT_STATICS::ScriptStructInfo),

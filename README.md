@@ -54,6 +54,8 @@ type the node name. There is nothing to place in the level.
 | `Send Mark` | Something worth noting happens | A note with a time stamp, for example `oncoming:start`. |
 | `End Session` | The ride is over | Stop recording, and why (see below). |
 | `Is Session Active` | Any time | True while the tablet is recording. |
+| `Is Session Paused` | Any time | True while the operator has paused the recording on the tablet. The recording's clock stands still and no gaze is written meanwhile. |
+| `On Recording Ended` | Bind once, when the level starts | Fires when the tablet ends the recording (Stop on the tablet). The experience does not stop by itself: bind this if it should. |
 | `Release Tablet` | A tablet crashed or lost Wi-Fi and the VR PC still holds it | Nothing: it frees the VR PC for the next tablet. See "Several tablets, two bikes". |
 
 ## A whole ride, step by step
@@ -264,8 +266,16 @@ in your Blueprint: the plugin and the tablet handle it.
 |---|---|
 | No tablet connected | The tablet connects. |
 | Another tablet is connected | The new tablet is told **"busy"** and turned away. It tries the other VR PC, or waits and tries again. The connected tablet is **never** knocked off. |
-| The recording tablet lost Wi-Fi for a moment | It reconnects and gets its VR PC back. The ride carries on during the gap. |
+| A tablet is connected, another is being checked, and a third knocks; or a tablet answers slowly | The late one is told **"try again"** and dials again a moment later. |
+| The same tablet connects again (its Wi-Fi dropped, the app restarted) | Its new connection replaces its old one, straight away. |
+| The recording tablet lost Wi-Fi for a moment | It reconnects and gets its VR PC back. The ride carries on during the gap; what was sent meanwhile is not repeated. The VR PC also tells it which location and design are on (newer tablet versions show this). |
+| A tablet with the wrong pairing code | It is refused and disconnected, so the VR PC stays free for its own tablet. |
+| A tablet lets go after its ride | The VR PC is free immediately. |
 | `Start Session` was called with no tablet connected | The ride starts anyway. The next tablet to connect joins it. |
+
+Testing two tablets on one PC: they must be two real devices. Two copies of the
+tablet app on the same computer share one network address, and the VR PC treats
+them as one tablet reconnecting.
 
 ### Set up once
 
@@ -281,7 +291,8 @@ in your Blueprint: the plugin and the tablet handle it.
 
 A tablet that crashes, runs out of battery or drops off Wi-Fi between rides may
 not say goodbye, so the VR PC still thinks it is connected. Every other tablet
-then gets "busy".
+then gets "busy". (A tablet that closes the app or lets go normally frees the PC
+at once.)
 
 - A tablet with a current version of Primed Record checks in every few seconds.
   If it goes quiet for 20 seconds, the VR PC frees itself.

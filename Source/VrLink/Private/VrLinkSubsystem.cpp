@@ -184,6 +184,7 @@ void UVrLinkSubsystem::BuildLink(UWorld* World)
 	{
 		UE_LOG(LogVrLinkSubsystem, Log, TEXT("VR Link: using the level's own on %s."),
 			*GetNameSafe(Existing->GetOwner()));
+		Existing->OnRecordingEnded.AddUniqueDynamic(this, &UVrLinkSubsystem::ForwardRecordingEnded);
 		return;
 	}
 
@@ -219,6 +220,7 @@ void UVrLinkSubsystem::BuildLink(UWorld* World)
 	// to look for a node they must not call.
 	Link->RestoreSession(CarriedSession);
 	Link->RegisterComponent();
+	Link->OnRecordingEnded.AddUniqueDynamic(this, &UVrLinkSubsystem::ForwardRecordingEnded);
 
 	// Gaze rides along; it follows the session by itself.
 	UGazeRecorder* Gaze = NewObject<UGazeRecorder>(Host, TEXT("GazeRecorder"));
@@ -386,6 +388,23 @@ bool UVrLinkSubsystem::IsSessionActive() const
 {
 	const UVrLinkComponent* Link = FindLink();
 	return Link != nullptr && Link->IsSessionActive();
+}
+
+bool UVrLinkSubsystem::IsSessionPaused() const
+{
+	const UVrLinkComponent* Link = FindLink();
+	return Link != nullptr && Link->IsSessionPaused();
+}
+
+void UVrLinkSubsystem::ForwardRecordingEnded(const FString& Reason)
+{
+	// A new session's memory starts clean, as after End Session; otherwise the next
+	// participant's first location and opening pedal state would be dropped as repeats.
+	CarriedSession = FVrLinkCarriedSession();
+	LastLocation.Reset();
+	LastPedalling.Reset();
+	RawPedalling.Reset();
+	OnRecordingEnded.Broadcast(Reason);
 }
 
 FString UVrLinkSubsystem::GetSessionId() const

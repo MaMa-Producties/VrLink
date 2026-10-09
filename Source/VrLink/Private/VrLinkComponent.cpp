@@ -487,6 +487,14 @@ void UVrLinkComponent::HandleLine(FString Line)
 	{
 		HandleSessionEnd(Msg);
 	}
+	else if (Type == TEXT("session.pause"))
+	{
+		HandlePause(Msg, true);
+	}
+	else if (Type == TEXT("session.resume"))
+	{
+		HandlePause(Msg, false);
+	}
 	else if (Type == TEXT("session.saved"))
 	{
 		// Ack to our own session.end; nothing further to do on this side.
@@ -547,7 +555,7 @@ void UVrLinkComponent::HandleHello(const TSharedPtr<FJsonObject>& Msg)
 		Msg->TryGetStringField(TEXT("pairingCode"), TabletCode);
 		if (TabletCode != StudyConfig.PairingCode)
 		{
-			SendReject(TEXT("pairing-code-mismatch"), /*bStopServer=*/false);
+			SendReject(TEXT("pairing-code-mismatch"));
 			return;
 		}
 	}
@@ -636,8 +644,56 @@ void UVrLinkComponent::HandleHello(const TSharedPtr<FJsonObject>& Msg)
 	Welcome->SetBoolField(TEXT("sessionActive"), bSessionActive);
 	Welcome->SetStringField(TEXT("sessionId"), bSessionActive ? SessionId : FString());
 
+	// Where the running ride is right now, so a tablet that joins or rejoins partway can
+	// label what follows. Nothing missed while the link was down is sent again; this is
+	// the state, not the history. Empty when nothing is running or nothing was sent yet.
+	// Only when there is something to say: a tablet released before 7 October reads at
+	// most 1024 bytes as one message, and every byte of the welcome counts against that.
+	if (bSessionActive)
+	{
+		if (!LastLocationSent.IsEmpty()) Welcome->SetStringField(TEXT("scene"), LastLocationSent);
+		if (!LastScenarioSent.IsEmpty()) Welcome->SetStringField(TEXT("scenario"), LastScenarioSent);
+		if (!OpenBaselinePhase.IsEmpty()) Welcome->SetStringField(TEXT("baselinePhase"), OpenBaselinePhase);
+		if (bPaused) Welcome->SetBoolField(TEXT("paused"), true);
+	}
+
+	// A tablet coming back into its own ride, which it paused, is paused again only if it
+	// says so: its resume may have been sent while the link was down, and a pause nobody
+	// ends would freeze this clock and stop gaze for the rest of the ride.
+	if (bPaused)
+	{
+		const TSharedPtr<FJsonObject>* Resume = nullptr;
+		FString ResumeId;
+		if (Msg->TryGetObjectField(TEXT("resume"), Resume) && Resume && Resume->IsValid())
+		{
+			(*Resume)->TryGetStringField(TEXT("sessionId"), ResumeId);
+		}
+		if (ResumeId == SessionId)
+		{
+			PausedSeconds += FPlatformTime::Seconds() - PauseStartSeconds;
+			bPaused = false;
+			Welcome->RemoveField(TEXT("paused"));
+			UE_LOG(LogTemp, Log, TEXT("[vrlink] The tablet reconnected; its pause is taken as over until it says otherwise."));
+		}
+	}
+
+	{
+		FString Probe;
+		const TSharedRef<TJsonWriter<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>> Writer =
+			TJsonWriterFactory<TCHAR, TCondensedJsonPrintPolicy<TCHAR>>::Create(&Probe);
+		FJsonSerializer::Serialize(Welcome, Writer);
+		const int32 Bytes = FTCHARToUTF8(*Probe).Length();
+		if (Bytes > 1000)
+		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("[vrlink] The welcome is %d bytes. Tablets older than 7 October cannot read more than 1024; keep step names short."),
+				Bytes);
+		}
+	}
+
 	SendJson(Welcome);
 	bHandshakeComplete = true;
+	++WelcomeCount;
 }
 
 void UVrLinkComponent::HandleSessionStart(const TSharedPtr<FJsonObject>& Msg)
@@ -718,8 +774,22 @@ void UVrLinkComponent::HandleSessionStarted(const TSharedPtr<FJsonObject>& Msg)
 void UVrLinkComponent::HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg)
 {
 	// Unity-initiated end (spec §4 stop): Unity owns the event log, so just reply session.saved.
-	bSessionActive = false;
-	PublishSession();
+	FString Reason;
+	Msg->TryGetStringField(TEXT("reason"), Reason);
+	FString ForSession;
+	Msg->TryGetStringField(TEXT("sessionId"), ForSession);
+	const bool bEndsThisRide = bSessionActive
+		&& (ForSession.IsEmpty() || SessionId.IsEmpty() || ForSession == SessionId);
+
+	if (bEndsThisRide)
+	{
+		bSessionActive = false;
+		bPaused = false;
+		LastLocationSent.Reset();
+		LastScenarioSent.Reset();
+		OpenBaselinePhase.Reset();
+		PublishSession();
+	}
 
 	const TSharedRef<FJsonObject> Saved = MakeShared<FJsonObject>();
 	Saved->SetStringField(TEXT("type"), TEXT("session.saved"));
@@ -730,6 +800,44 @@ void UVrLinkComponent::HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg)
 	// the path so the operator can see on the tablet that the PC wrote its half.
 	Saved->SetStringField(TEXT("file"), GazeFilePath);
 	SendJson(Saved);
+
+	// The tablet ended it. The VR used to carry on as if nothing had happened, with no
+	// way for the experience to know; now it can react.
+	if (bEndsThisRide)
+	{
+		OnRecordingEnded.Broadcast(Reason.IsEmpty() ? FString(TEXT("complete")) : Reason);
+	}
+}
+
+void UVrLinkComponent::HandlePause(const TSharedPtr<FJsonObject>& Msg, bool bPause)
+{
+	if (!bSessionActive)
+	{
+		return;
+	}
+	FString ForSession;
+	Msg->TryGetStringField(TEXT("sessionId"), ForSession);
+	if (!ForSession.IsEmpty() && !SessionId.IsEmpty() && ForSession != SessionId)
+	{
+		return;   // a pause for some other session than the one running here
+	}
+
+	// The tablet's clock stops while it is paused and its events skip the paused time.
+	// This clock used to keep running, so after a pause every gaze row and every event
+	// from the VR was late against the tablet by however long the pause had lasted.
+	const double Now = FPlatformTime::Seconds();
+	if (bPause && !bPaused)
+	{
+		bPaused = true;
+		PauseStartSeconds = Now;
+		UE_LOG(LogTemp, Log, TEXT("[vrlink] Recording paused by the tablet; the session clock waits."));
+	}
+	else if (!bPause && bPaused)
+	{
+		PausedSeconds += Now - PauseStartSeconds;
+		bPaused = false;
+		UE_LOG(LogTemp, Log, TEXT("[vrlink] Recording resumed after %.1f s."), Now - PauseStartSeconds);
+	}
 }
 
 void UVrLinkComponent::StartSession()
@@ -777,6 +885,10 @@ void UVrLinkComponent::EndSession(const FString& Reason)
 	const double EndT = SessionElapsedSeconds();
 	const FString EndWall = NowIso();
 	bSessionActive = false;
+	bPaused = false;
+	LastLocationSent.Reset();
+	LastScenarioSent.Reset();
+	OpenBaselinePhase.Reset();
 	PublishSession();
 
 	// VR-initiated end (spec §4 stop): notify Unity (Unity owns the event log).
@@ -797,6 +909,10 @@ void UVrLinkComponent::SendState(const FString& Name, const FString& Value)
 	{
 		LastLocationSent = Value;
 	}
+	else if (Name == ScenarioStateName)
+	{
+		LastScenarioSent = Value;
+	}
 
 	// Send to Unity, which records it in its own event log (a scene change if
 	// Name=="Scene", otherwise a variable/condition change).
@@ -808,6 +924,7 @@ void UVrLinkComponent::SendState(const FString& Name, const FString& Value)
 
 void UVrLinkComponent::SendBaseline(const FString& Phase, bool bStart)
 {
+	OpenBaselinePhase = bStart ? Phase : FString();
 	const TSharedRef<FJsonObject> Event = MakeEvent(bStart ? TEXT("baseline.start") : TEXT("baseline.end"), SessionElapsedSeconds(), NowIso());
 	Event->SetStringField(TEXT("phase"), Phase);
 	SendJson(Event);
@@ -839,19 +956,14 @@ void UVrLinkComponent::SendError(const FString& Message)
 	SendJson(Error);
 }
 
-void UVrLinkComponent::SendReject(const FString& Reason, bool bStopServer)
+void UVrLinkComponent::SendReject(const FString& Reason)
 {
-	const TSharedRef<FJsonObject> Reject = MakeShared<FJsonObject>();
-	Reject->SetStringField(TEXT("type"), TEXT("reject"));
-	Reject->SetStringField(TEXT("reason"), Reason);
-	SendJson(Reject);
-
-	// On a bad protocol/version, drop the link entirely. But a pairing-code mismatch just means this
-	// isn't our tablet — keep listening so this station's own tablet can still connect.
-	if (bStopServer)
-	{
-		NetworkManager::GetInstance().StopServer();
-	}
+	// Refuse this tablet and close its connection, and keep listening. A protocol mismatch
+	// used to stop the server for the rest of the level, so one wrong build in the room
+	// took the PC off the network; and a pairing-code mismatch left the refused tablet
+	// connected, holding the PC so its own tablet could not get on.
+	UE_LOG(LogTemp, Warning, TEXT("[vrlink] Refusing the tablet: %s"), *Reason);
+	NetworkManager::GetInstance().RejectClient(Reason);
 }
 
 void UVrLinkComponent::SendJson(const TSharedRef<FJsonObject>& Obj)
@@ -880,6 +992,9 @@ void UVrLinkComponent::BeginSessionClock(const FString& WallUtc)
 	SessionStartSeconds = FPlatformTime::Seconds();
 	SessionStartWallUtc = WallUtc;
 	bSessionActive = true;
+	bPaused = false;
+	PausedSeconds = 0.0;
+	PauseStartSeconds = 0.0;
 }
 
 FVrLinkCarriedSession UVrLinkComponent::CaptureSession() const
@@ -894,6 +1009,12 @@ FVrLinkCarriedSession UVrLinkComponent::CaptureSession() const
 	Carried.GazeFilePath = GazeFilePath;
 	Carried.StartWallUtc = SessionStartWallUtc;
 	Carried.StartSeconds = SessionStartSeconds;
+	Carried.bPaused = bPaused;
+	Carried.PausedSeconds = PausedSeconds;
+	Carried.PauseStartSeconds = PauseStartSeconds;
+	Carried.LastLocation = LastLocationSent;
+	Carried.LastScenario = LastScenarioSent;
+	Carried.BaselinePhase = OpenBaselinePhase;
 	return Carried;
 }
 
@@ -919,6 +1040,12 @@ void UVrLinkComponent::RestoreSession(const FVrLinkCarriedSession& Carried)
 	// ones recorded before the level changed. Resetting it here would silently rewind
 	// Time to zero partway through a recording.
 	SessionStartSeconds = Carried.StartSeconds;
+	bPaused = Carried.bPaused;
+	PausedSeconds = Carried.PausedSeconds;
+	PauseStartSeconds = Carried.PauseStartSeconds;
+	LastLocationSent = Carried.LastLocation;
+	LastScenarioSent = Carried.LastScenario;
+	OpenBaselinePhase = Carried.BaselinePhase;
 	PublishSession();
 }
 
@@ -943,7 +1070,14 @@ void UVrLinkComponent::OnTabletLost()
 
 double UVrLinkComponent::SessionElapsedSeconds() const
 {
-	return bSessionActive ? (FPlatformTime::Seconds() - SessionStartSeconds) : 0.0;
+	if (!bSessionActive)
+	{
+		return 0.0;
+	}
+	// The tablet's own Time skips paused stretches, so this one does too.
+	const double Now = FPlatformTime::Seconds();
+	const double Paused = PausedSeconds + (bPaused ? Now - PauseStartSeconds : 0.0);
+	return Now - SessionStartSeconds - Paused;
 }
 
 FString UVrLinkComponent::NowIso()

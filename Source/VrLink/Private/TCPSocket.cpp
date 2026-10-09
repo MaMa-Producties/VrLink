@@ -110,23 +110,25 @@ void ATCPSocket::ReceiveMessage(TArray<uint8> Data)
 	if (PrintMessages) {
 		PRINT_KEYED(KeyRecvCount, FString::Printf(TEXT("Received %d bytes"), Data.Num()));
 	}
-	FString Message = FString();
-	for (int i = 0; i < Data.Num(); i++)
+	// NetworkManager hands over whole lines only, so nothing is left over between calls.
+	// Each line is decoded as UTF-8: it used to be read a byte at a time as if every byte
+	// were a character, which garbled any name with an accent in it.
+	int32 Start = 0;
+	for (int32 i = 0; i < Data.Num(); i++)
 	{
-		if (Data[i] == '\n' || Data[i] == '\0')
+		if (Data[i] != '\n' && Data[i] != '\0')
 		{
-			if (OnMessageReceived.IsBound())
-				OnMessageReceived.Broadcast(Message);
-
-			if (PrintMessages) {
-				PRINT_KEYED(KeyRecvMessage, Message);
-			}
-
-			Message = "";
+			continue;
 		}
-		else
-		{
-			Message.AppendChar(Data[i]);
+		const FUTF8ToTCHAR Text(reinterpret_cast<const ANSICHAR*>(Data.GetData() + Start), i - Start);
+		const FString Message(Text.Length(), Text.Get());
+		Start = i + 1;
+
+		if (OnMessageReceived.IsBound())
+			OnMessageReceived.Broadcast(Message);
+
+		if (PrintMessages) {
+			PRINT_KEYED(KeyRecvMessage, Message);
 		}
 	}
 }

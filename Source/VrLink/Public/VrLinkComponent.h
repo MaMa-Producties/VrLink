@@ -145,6 +145,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FExperienceStepStarted, const FStr
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FExperienceStepEnded, const FString&, Location, const FString&, Scenario, EStepKind, StepKind, int32, StepIndex);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FExperienceFinished);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRecordingStarted, const FString&, SessionId);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FRecordingEnded, const FString&, Reason);
 
 /**
  * Runs the experience and speaks the vrlink v1.1 protocol to the Unity recorder.
@@ -192,6 +193,12 @@ struct FVrLinkCarriedSession
 	FString GazeFilePath;
 	FString StartWallUtc;
 	double StartSeconds = 0.0;
+	bool bPaused = false;
+	double PausedSeconds = 0.0;
+	double PauseStartSeconds = 0.0;
+	FString LastLocation;
+	FString LastScenario;
+	FString BaselinePhase;
 };
 
 
@@ -250,6 +257,14 @@ public:
 	 */
 	UPROPERTY(BlueprintAssignable, Category = "VrLink")
 	FRecordingStarted OnRecordingStarted;
+
+	/**
+	 * Fires when the tablet ends the recording (the operator pressed Stop, or the tablet
+	 * closed the session). `Reason` is what the tablet sent, for example `complete` or
+	 * `operator-stop`. The experience is not stopped for you: bind this if it should be.
+	 */
+	UPROPERTY(BlueprintAssignable, Category = "VrLink")
+	FRecordingEnded OnRecordingEnded;
 
 	/** Runs the experience from the first step. No-op if already running. */
 	UFUNCTION(BlueprintCallable, Category = "Experience")
@@ -353,6 +368,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "VrLink")
 	bool IsSessionActive() const { return bSessionActive; }
 
+	/** Whether the tablet has paused the recording. The session clock stands still meanwhile. */
+	UFUNCTION(BlueprintPure, Category = "VrLink")
+	bool IsSessionPaused() const { return bSessionActive && bPaused; }
+
+	/** How many tablets have been welcomed so far, so the gaze recorder can re-announce itself. */
+	int32 GetWelcomeCount() const { return WelcomeCount; }
+
 	/** Seconds since session start: the clock every event and every gaze row is stamped with. */
 	UFUNCTION(BlueprintPure, Category = "VrLink")
 	double GetSessionElapsedSeconds() const { return SessionElapsedSeconds(); }
@@ -428,7 +450,11 @@ private:
 	void HandleSessionStarted(const TSharedPtr<FJsonObject>& Msg);
 	void HandleSessionEnd(const TSharedPtr<FJsonObject>& Msg);
 
-	void SendReject(const FString& Reason, bool bStopServer = true);
+	/** `session.pause` / `session.resume` from the tablet: hold or release the session clock. */
+	void HandlePause(const TSharedPtr<FJsonObject>& Msg, bool bPause);
+
+	/** Refuse the connected tablet with `Reason` and close it; the PC stays open for the next. */
+	void SendReject(const FString& Reason);
 	void SendJson(const TSharedRef<FJsonObject>& Obj);
 	TSharedRef<FJsonObject> MakeEvent(const FString& Type, double T, const FString& WallUtc);
 
@@ -446,6 +472,17 @@ private:
 	bool bHandshakeComplete = false;
 	bool bSessionActive = false;
 	int32 OutSeq = 0;
+
+	/** The tablet's pause, mirrored so gaze and events stay on the tablet's clock. */
+	bool bPaused = false;
+	double PausedSeconds = 0.0;
+	double PauseStartSeconds = 0.0;
+
+	int32 WelcomeCount = 0;
+
+	/** What the experience last told the tablet, for a tablet that joins partway. */
+	FString LastScenarioSent;
+	FString OpenBaselinePhase;
 
 	FString SessionId;
 	FString MuseId;
