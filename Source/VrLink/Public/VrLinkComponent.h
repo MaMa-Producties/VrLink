@@ -395,9 +395,10 @@ public:
 	/** Everything about a running session that must outlive the level it started in. */
 	FVrLinkCarriedSession CaptureSession() const;
 
-	/** Adopt a session that began in a previous level. No traffic, no handshake: the
-	 *  tablet's connection and the session it agreed to are both still standing, and
-	 *  only the actors holding our end of it were destroyed. */
+	/** Adopt the link and any session from the previous level. No traffic, no handshake:
+	 *  the tablet's connection and the session it agreed to are both still standing, and
+	 *  only the actors holding our end of it were destroyed. The handshake is adopted
+	 *  with or without a session, since a linked tablet never says hello twice. */
 	void RestoreSession(const FVrLinkCarriedSession& Carried);
 
 protected:

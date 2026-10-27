@@ -1020,15 +1020,25 @@ FVrLinkCarriedSession UVrLinkComponent::CaptureSession() const
 
 void UVrLinkComponent::RestoreSession(const FVrLinkCarriedSession& Carried)
 {
+	// The tablet stays linked between rides too, and it does not say hello again after a
+	// level change. This used to be carried only with a running session, so the first
+	// level after a ride believed no tablet was there: Start Session started the ride
+	// here without sending `session.start`, and the tablet recorded nothing until the
+	// game was restarted. Still connected is checked as well, for a tablet that left
+	// while the level was loading.
+	bHandshakeComplete = Carried.bHandshakeComplete && NetworkManager::GetInstance().IsSocketConnected();
+	if (!Carried.MuseId.IsEmpty())
+	{
+		MuseId = Carried.MuseId;
+	}
+
 	if (!Carried.bActive)
 	{
 		return;
 	}
 
 	bSessionActive = true;
-	bHandshakeComplete = Carried.bHandshakeComplete;
 	SessionId = Carried.SessionId;
-	MuseId = Carried.MuseId;
 	ParticipantId = Carried.ParticipantId;
 	SessionFolder = Carried.SessionFolder;
 	GazeFilePath = Carried.GazeFilePath;
