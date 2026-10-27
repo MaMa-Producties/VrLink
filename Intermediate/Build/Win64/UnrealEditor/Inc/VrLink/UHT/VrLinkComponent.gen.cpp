@@ -2040,7 +2040,7 @@ UVrLinkComponent::~UVrLinkComponent() {}
 #ifdef UHT_STATICS
 #error UHT_STATICS already defined
 #endif
-#define UHT_STATICS Z_CompiledInDeferFile_FID_vlpkg6_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
+#define UHT_STATICS Z_CompiledInDeferFile_FID_vlb_VrLink_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_Statics
 struct UHT_STATICS
 {
 	static constexpr FEnumRegisterCompiledInInfo EnumInfo[] = {
@@ -2057,7 +2057,7 @@ struct UHT_STATICS
 		{ Z_Construct_UClass_UVrLinkComponent, TEXT("UVrLinkComponent"), &Z_Registration_Info_UClass_UVrLinkComponent, CONSTRUCT_RELOAD_VERSION_INFO(FClassReloadVersionInfo, sizeof(UVrLinkComponent), 1238077825U) },
 	};
 }; // UHT_STATICS 
-static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlpkg6_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_d4676f52b9b978ec7bdef26b443d30bc8da8553f{
+static FRegisterCompiledInInfo Z_CompiledInDeferFile_FID_vlb_VrLink_HostProject_Plugins_VrLink_Source_VrLink_Public_VrLinkComponent_h__Script_VrLink_d4676f52b9b978ec7bdef26b443d30bc8da8553f{
 	TEXT("/Script/VrLink"),
 	UHT_STATICS::ClassInfo, UE_ARRAY_COUNT(UHT_STATICS::ClassInfo),
 	UHT_STATICS::ScriptStructInfo, UE_ARRAY_COUNT(UHT_STATICS::ScriptStructInfo),
